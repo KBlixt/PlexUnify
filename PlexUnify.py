@@ -8,6 +8,7 @@ from urllib.error import URLError
 from shutil import copyfile
 from bs4 import BeautifulSoup
 
+# these packages need to be installed:
 from plexapi.server import PlexServer
 import sqlite3
 
