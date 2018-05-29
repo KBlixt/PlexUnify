@@ -112,6 +112,7 @@ def main():
             movie['user_fields'] = 'lockedFields=' + '|'.join(movie['user_fields'])
             if movie['user_fields'] != compare:
                 movie['metadata_items_jobs']['user_fields'] = movie['user_fields']
+                print('Processing : "' + movie['title'] + '"')
         metadata_items_commits[movie['metadata_id']] = movie['metadata_items_jobs']
 
         tmdb_movie_metadata = None
@@ -119,6 +120,15 @@ def main():
         tmdb_collection_metadata = None
         secondary_tmdb_collection_metadata = None
 
+    if global_settings.getboolean('prompt_before_writing'):
+        print('The script is now ready to write to your database.')
+        print('Please turn of plex while the script is running.')
+        print('The write process is fairly quick. Do you wish to proceed?')
+        cont = input("Do you wish to proceed? yes/no > ")
+        while cont.lower() not in ("yes", "no"):
+            cont = input("Do you wish to proceed? yes/no > ")
+        if cont == "no":
+            sys.exit()
     # Commit to database.
     commit_to_database()
 
