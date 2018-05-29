@@ -69,7 +69,7 @@ def main():
     # Backup Database.
     backup_database(database_dir, database_backup_dir)
 
-    for movie_tuple in main_cursor.execute('SELECT id, guid, title, title_sort, tagline, content_rating, user_fields '
+    for movie_tuple in main_cursor.execute('SELECT id, guid, title, original_title, tagline, content_rating, user_fields '
                                            'FROM metadata_items '
                                            'WHERE library_section_id = ' + library_key + ' '
                                            'AND metadata_type = 1 '
@@ -80,7 +80,7 @@ def main():
         movie['metadata_id'] = movie_tuple[0]
         movie['guid'] = movie_tuple[1]
         movie['title'] = movie_tuple[2]
-        movie['title_sort'] = movie_tuple[3]
+        movie['original_title'] = movie_tuple[3]
         movie['tagline'] = movie_tuple[4]
         movie['content_rating'] = movie_tuple[5]
         movie['user_fields'] = movie_tuple[6]
@@ -132,11 +132,11 @@ def backup_database(source_dir, target_dir):
 
 def process_movie(movie):
 
-    def change_sort_titles():
+    def change_original_titles():
 
         if not settings.getboolean('force'):
             if settings.getboolean('respect_lock'):
-                if any("2" == s for s in movie['user_fields']):
+                if any("3" == s for s in movie['user_fields']):
                     return
 
         if tmdb_movie_metadata is None:
@@ -147,20 +147,20 @@ def process_movie(movie):
             get_secondary_tmdb_movie_metadata(movie, secondary_language)
 
         if tmdb_movie_metadata['title'] == secondary_tmdb_movie_metadata['title']:
-            title_sort = tmdb_movie_metadata['title']
+            original_title = tmdb_movie_metadata['title']
         elif not settings.getboolean('invert_title_positions'):
-            title_sort = tmdb_movie_metadata['title'] + ' ' \
-                              + settings['title_sort_delimiter'] + ' ' \
+            original_title = tmdb_movie_metadata['title'] + ' ' \
+                              + settings['title_delimiter'] + ' ' \
                               + secondary_tmdb_movie_metadata['title']
         else:
-            title_sort = secondary_tmdb_movie_metadata['title'] + ' ' \
-                              + settings['title_sort_delimiter'] + ' ' \
+            original_title = secondary_tmdb_movie_metadata['title'] + ' ' \
+                              + settings['title_delimiter'] + ' ' \
                               + tmdb_movie_metadata['title']
 
-        movie['metadata_items_jobs']['title_sort'] = title_sort
+        movie['metadata_items_jobs']['original_title'] = original_title
 
-        if settings.getboolean('lock_after_completion') and '2' not in movie['user_fields']:
-            movie['user_fields'].append('2')
+        if settings.getboolean('lock_after_completion') and '3' not in movie['user_fields']:
+            movie['user_fields'].append('3')
 
     def change_content_ratings():
 
@@ -269,9 +269,9 @@ def process_movie(movie):
             movie['user_fields'].append('15')
 
     # change genres.
-    settings = config['SORT_TITLE_SETTINGS']
-    if settings.getboolean('change_sort_titles', False):
-        change_sort_titles()
+    settings = config['ORIGINAL_TITLE_SETTINGS']
+    if settings.getboolean('change_original_title', False):
+        change_original_titles()
 
     # change movie content rating.
     settings = config['CONTENT_RATING_SETTINGS']
