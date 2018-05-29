@@ -408,7 +408,7 @@ def get_imdb_content_rating(movie, country):
     try:
         cert = cert.split(':')[1].split('"')[0]
     except IndexError:
-        print(movie['title'] + 'don\'t have a content rating on imdb for this country.')
+        print(movie['title'] + ' don\'t have a content rating on imdb for this country.')
         cert = ':-???-:'
 
     return cert
