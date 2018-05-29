@@ -262,9 +262,9 @@ def process_movie(movie):
 
                     elif movie['taggings_list'][tagging_id] == movie['tags_list'][rename_from.lower()]:
                         if tagging_id in taggings_commits:
-                            taggings_commits[tagging_id]['tag_id'] = movie['tags_list'][rename_to]
+                            taggings_commits[tagging_id]['tag_id'] = movie['tags_list'][rename_to.lower()]
                         else:
-                            taggings_commits[tagging_id] = {'tag_id': movie['tags_list'][rename_to]}
+                            taggings_commits[tagging_id] = {'tag_id': movie['tags_list'][rename_to.lower()]}
 
         if settings.getboolean('lock_after_completion') and '15' not in movie['user_fields']:
             movie['user_fields'].append('15')
