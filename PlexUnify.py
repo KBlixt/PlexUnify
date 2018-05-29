@@ -107,6 +107,12 @@ def main():
 
         process_collection(movie)
 
+        temp = list()
+        for value in movie['user_fields']:
+            if value != '':
+                temp.append(value)
+        movie['user_fields'] = temp
+
         if len(movie['user_fields']) > 0:
             movie['user_fields'].sort(key=int)
             movie['user_fields'] = 'lockedFields=' + '|'.join(movie['user_fields'])
