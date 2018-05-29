@@ -179,8 +179,6 @@ def process_movie(movie):
 
         if movie['imdb_id'] is None:
             get_tmdb_movie_metadata(movie, main_language)
-        if len(movie['imdb_id']) != 9:
-            return
         content_rating = get_imdb_content_rating(movie, settings['content_rating_country_code'])
 
         found = False
@@ -277,21 +275,31 @@ def process_movie(movie):
     print('Processing : "' + movie['title'] + '"')
 
     # change genres.
-    settings = config['ORIGINAL_TITLE_SETTINGS']
-    if settings.getboolean('change_original_title', False):
-        change_original_titles()
+    try:
+        settings = config['ORIGINAL_TITLE_SETTINGS']
+        if settings.getboolean('change_original_title', False):
+            change_original_titles()
+    except ValueError as e:
+        print(e)
 
     # change movie content rating.
-    settings = config['CONTENT_RATING_SETTINGS']
-    if settings.getboolean('change_content_ratings', False):
-        change_content_ratings()
+    try:
+        settings = config['CONTENT_RATING_SETTINGS']
+        if settings.getboolean('change_content_ratings', False):
+            change_content_ratings()
+    except ValueError as e:
+        print(e)
 
     # add missing tagline.
-    settings = config['TAGLINE_SETTINGS']
-    if settings.getboolean('add_missing_tagline', False):
-        add_missing_tagline()
+    try:
+        settings = config['TAGLINE_SETTINGS']
+        if settings.getboolean('add_missing_tagline', False):
+            add_missing_tagline()
+    except ValueError as e:
+        print(e)
 
     # convert genres.
+
     settings = config['GENRES_SETTINGS']
     if settings.getboolean('convert_genres', False):
         convert_genres()
@@ -394,6 +402,10 @@ def get_tmdb_movie_id(movie):
                                  '&external_source=imdb_id', 'tmdb id')
 
     data = json.loads(response.read().decode('utf-8'))
+
+    if len(data['movie_results']) == 0:
+        raise ValueError('Unable to find TMDB ID. Skipping.')
+
     movie['tmdb_id'] = str(data['movie_results'][0]['id'])
     response.close()
 
@@ -407,6 +419,8 @@ def get_tmdb_movie_metadata(movie, tmdb_language_code):
                                  '&language=' + tmdb_language_code, 'english movie metadata from tmdb')
 
     tmdb_movie_metadata = json.loads(response.read().decode('utf-8'))
+    if len(movie['imdb_id']) != 9:
+        raise ValueError("Unable to find IMDB ID. Skipping.")
     movie['imdb_id'] = tmdb_movie_metadata['imdb_id']
     response.close()
 
