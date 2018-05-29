@@ -256,9 +256,9 @@ def process_movie(movie):
 
                     elif rename_to.lower() not in movie['tags_list']:
                         if movie['tags_list'][rename_from.lower()] in tags_commits:
-                            tags_commits[movie['tags_list'][rename_from.lower()]]['tag'] = rename_to.lower().capitalize()
+                            tags_commits[movie['tags_list'][rename_from.lower()]]['tag'] = rename_to.title()
                         else:
-                            tags_commits[movie['tags_list'][rename_from.lower()]] = {'tag': rename_to.lower().capitalize()}
+                            tags_commits[movie['tags_list'][rename_from.lower()]] = {'tag': rename_to.title()}
 
                     elif movie['taggings_list'][tagging_id] == movie['tags_list'][rename_from.lower()]:
                         if tagging_id in taggings_commits:
