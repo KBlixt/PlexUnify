@@ -74,7 +74,7 @@ def main():
                                            'WHERE library_section_id = ' + library_key + ' '
                                            'AND metadata_type = 1 '
                                            'ORDER BY title ASC '
-                                           'LIMIT ' + str(global_settings.getint('modify_limit'))):
+                                           'LIMIT ' + str(global_settings.getint('modify_limit', 30))):
 
         movie = dict()
         movie['metadata_id'] = movie_tuple[0]
