@@ -4,7 +4,7 @@ import configparser
 import time
 import json
 from urllib.request import urlopen
-from urllib.error import URLError
+from urllib.error import URLError, HTTPError
 from shutil import copyfile
 from bs4 import BeautifulSoup
 
@@ -382,6 +382,8 @@ def retrieve_web_page(url, page_name='page'):
         try:
             response = urlopen(url)
             break
+        except HTTPError as e:
+            raise ValueError('Failed to download ' + page_name + ' : ' + e.msg)
         except URLError:
             print('Failed to download ' + page_name + '. Trying again in 10 seconds')
             time.sleep(10)
@@ -391,6 +393,7 @@ def retrieve_web_page(url, page_name='page'):
                 print('----------------------------------------')
                 commit_to_database()
                 sys.exit()
+
     return response
 
 
@@ -419,7 +422,7 @@ def get_tmdb_movie_metadata(movie, tmdb_language_code):
                                  '&language=' + tmdb_language_code, 'english movie metadata from tmdb')
 
     tmdb_movie_metadata = json.loads(response.read().decode('utf-8'))
-    if len(movie['imdb_id']) != 9:
+    if len(tmdb_movie_metadata['imdb_id']) != 9:
         raise ValueError("Unable to find IMDB ID. Skipping.")
     movie['imdb_id'] = tmdb_movie_metadata['imdb_id']
     response.close()
