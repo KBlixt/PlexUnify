@@ -125,7 +125,7 @@ def main():
         tmdb_collection_metadata = None
         secondary_tmdb_collection_metadata = None
 
-    if global_settings.getboolean('prompt_before_writing', True):
+    if global_settings.getboolean('prompt_before_committing', True):
         print('The script is now ready to write to your database.')
         print('Please turn off Plex media server until the script is done.')
         print('The write process is fairly quick. Do you wish to proceed?')
