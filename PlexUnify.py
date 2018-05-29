@@ -2,13 +2,14 @@ import codecs
 import sys
 import configparser
 import time
-import sqlite3
 import json
 from urllib.request import urlopen
 from urllib.error import URLError
-from bs4 import BeautifulSoup
 from shutil import copyfile
+from bs4 import BeautifulSoup
+
 from plexapi.server import PlexServer
+import sqlite3
 
 # global static variable:
 
