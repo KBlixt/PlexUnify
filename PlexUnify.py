@@ -367,17 +367,19 @@ def retrieve_web_page(url, page_name='page'):
 
     response = None
 
-    for attempt in range(10):
+    for attempt in range(20):
         try:
             response = urlopen(url)
             break
         except URLError:
             print('Failed to download ' + page_name + '. Trying again in 10 seconds')
             time.sleep(10)
-            if attempt > 9:
+            if attempt > 8:
                 print('You might have lost internet connection.')
                 print('Breaking out of loop and committing')
-
+                commit_to_database()
+                database.close()
+                sys.exit()
     return response
 
 
