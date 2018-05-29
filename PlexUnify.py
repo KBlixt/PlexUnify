@@ -128,8 +128,6 @@ def main():
     # Commit to database.
     commit_to_database()
 
-    database.close()
-
 
 def backup_database(source_dir, target_dir):
 
@@ -322,7 +320,7 @@ def commit_to_database():
     if global_settings.getboolean('prompt_before_committing', True):
         print('The script is now ready to write to your database.')
         print('Please turn off Plex media server until the script is done.')
-        print('The write process is fairly quick. Do you wish to proceed?')
+        print('The write process is fairly quick.')
         cont = input("Do you wish to proceed? yes/no > ")
         while cont.lower() not in ("yes", "no"):
             cont = input("Do you wish to proceed? yes/no > ")
@@ -335,7 +333,6 @@ def commit_to_database():
         command = 'UPDATE metadata_items SET'
         for column, value in d.items():
             command += ' ' + str(column) + ' = "' + str(value).replace('"', '') + '",'
-            print(str(column) + " : " + str(value))
         command = command[:-1]
         command += ' WHERE id = ' + str(metadata_id)
         main_cursor.execute(command)
@@ -361,6 +358,10 @@ def commit_to_database():
         main_cursor.execute(command)
 
     database.commit()
+    database.close()
+
+    print('The writing process is now over.')
+    print('you may turn on your Plex server now.')
 
 
 def retrieve_web_page(url, page_name='page'):
@@ -377,8 +378,8 @@ def retrieve_web_page(url, page_name='page'):
             if attempt > 8:
                 print('You might have lost internet connection.')
                 print('Breaking out of loop and committing')
+                print('----------------------------------------')
                 commit_to_database()
-                database.close()
                 sys.exit()
     return response
 
