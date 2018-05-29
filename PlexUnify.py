@@ -9,7 +9,7 @@ from shutil import copyfile
 from bs4 import BeautifulSoup
 
 # these packages need to be installed:
-from plexapi.server import PlexServer
+# from plexapi.server import PlexServer
 import sqlite3
 
 # global static variable:
@@ -32,9 +32,10 @@ secondary_language = global_settings['tmdb_secondary_language']
 # plex api stuff
 plex_server_ip_address = global_settings['plex_server_ip_address']
 plex_auth_token = global_settings['plex_auth_token']
-plex_server = PlexServer(plex_server_ip_address, plex_auth_token)
-library = plex_server.library.section(global_settings['library_to_modify'])
-library_key = library.key
+# plex_server = PlexServer(plex_server_ip_address, plex_auth_token)
+# library = plex_server.library.section(global_settings['library_to_modify'])
+# library_key = library.key
+library_key = "1"
 
 # database stuff
 database_dir = global_settings['database_dir']
@@ -72,7 +73,7 @@ def main():
                                            'FROM metadata_items '
                                            'WHERE library_section_id = ' + library_key + ' '
                                            'AND metadata_type = 1 '
-                                           'ORDER BY title DESC '
+                                           'ORDER BY title ASC '
                                            'LIMIT ' + str(global_settings.getint('modify_limit'))):
 
         movie = dict()
