@@ -179,10 +179,9 @@ def process_movie(movie):
 
         if movie['imdb_id'] is None:
             get_tmdb_movie_metadata(movie, main_language)
-        content_rating = get_imdb_content_rating(movie, settings['content_rating_country_code'])
-
         if len(movie['imdb_id']) != 9:
             return
+        content_rating = get_imdb_content_rating(movie, settings['content_rating_country_code'])
 
         found = False
         for to_rating, from_rating in config.items('RATINGS'):
