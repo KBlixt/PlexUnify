@@ -97,9 +97,6 @@ def main():
         elif ".imdb" in movie['guid']:
             movie['tmdb_id'] = None
             movie['imdb_id'] = movie['guid'].split('//')[1].split('?')[0]
-        else:
-            print("Unable find either an imdb-ID or a tmdb-ID for " + movie['title'] + ", skipping movie.")
-            continue
 
         movie['metadata_items_jobs'] = dict()
 
