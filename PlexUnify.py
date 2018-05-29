@@ -125,16 +125,6 @@ def main():
         tmdb_collection_metadata = None
         secondary_tmdb_collection_metadata = None
 
-    if global_settings.getboolean('prompt_before_committing', True):
-        print('The script is now ready to write to your database.')
-        print('Please turn off Plex media server until the script is done.')
-        print('The write process is fairly quick. Do you wish to proceed?')
-        cont = input("Do you wish to proceed? yes/no > ")
-        while cont.lower() not in ("yes", "no"):
-            cont = input("Do you wish to proceed? yes/no > ")
-        if cont == "no":
-            sys.exit()
-
     # Commit to database.
     commit_to_database()
 
@@ -329,6 +319,16 @@ def process_collection(movie):
 
 def commit_to_database():
 
+    if global_settings.getboolean('prompt_before_committing', True):
+        print('The script is now ready to write to your database.')
+        print('Please turn off Plex media server until the script is done.')
+        print('The write process is fairly quick. Do you wish to proceed?')
+        cont = input("Do you wish to proceed? yes/no > ")
+        while cont.lower() not in ("yes", "no"):
+            cont = input("Do you wish to proceed? yes/no > ")
+        if cont == "no":
+            sys.exit()
+
     for metadata_id, d in metadata_items_commits.items():
         if len(d) == 0:
             continue
@@ -367,15 +367,16 @@ def retrieve_web_page(url, page_name='page'):
 
     response = None
 
-    for attempt in range(2):
+    for attempt in range(10):
         try:
             response = urlopen(url)
             break
         except URLError:
             print('Failed to download ' + page_name + '. Trying again in 10 seconds')
             time.sleep(10)
-            if attempt == 1:
-                response = urlopen(url)
+            if attempt > 9:
+                print('You might have lost internet connection.')
+                print('Breaking out of loop and committing')
 
     return response
 
