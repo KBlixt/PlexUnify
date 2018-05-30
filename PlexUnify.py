@@ -158,25 +158,19 @@ def main():
             return None
 
         suffix_list = settings.get('collection_suffixes_to_remove')
-        suffix_list.replace(' ', '')
-        suffix_list.split(',')
-        found = False
+        suffix_list = suffix_list.replace(' ', '')
+        suffix_list = suffix_list.split(',')
         for suffix in suffix_list:
-            if collection_ret['title'].endswith(suffix):
+            if collection_ret['title'].lower().endswith(suffix.lower()):
                 collection_ret['title'] = collection_ret['title'][:-(len(suffix) + 1)]
-                found = True
                 break
-        if not found:
-            if settings.getboolean('add_new_collections'):
-                library.get(movie['title']).addCollection(collection_ret['title'])
-                library.get(movie['title']).reload()
-                time.sleep(1)
-            else:
-                return None
+
+        global database
+        global cursor
 
         collection_info = None
-
-        for i in range(10):
+        created_collection = False
+        for i in range(100):
             time.sleep(1)
             cursor.execute('SELECT id, content_rating, user_fields, [index], hash '
                            'FROM metadata_items '
@@ -185,7 +179,24 @@ def main():
                            'AND title = ? ', (library_key, collection_ret['title'],))
             collection_info = cursor.fetchone()
             if collection_info is None:
-                time.sleep(1)
+                if not created_collection:
+                    if settings.getboolean('add_new_collections'):
+                        library.get(movie['title']).addCollection(collection_ret['title'])
+                        library.get(movie['title']).reload()
+                        created_collection = True
+
+                        database.commit()
+                        # time.sleep(1)
+                        # database.close()
+                        # time.sleep(1)
+                        # database = sqlite3.connect(database_dir)
+                        # cursor = database.cursor()
+
+                    else:
+                        return None
+                else:
+                    print('waiting.')
+                    time.sleep(1)
             else:
                 break
 
@@ -200,10 +211,10 @@ def main():
         else:
             collection_ret['user_fields'] = list()
 
-        cursor.execute('SELECT taggings.metadata_item_id'
+        cursor.execute('SELECT taggings.metadata_item_id '
                        'FROM tags '
                        'INNER JOIN taggings '
-                       'ON tags.tag_type = 2'
+                       'ON tags.tag_type = 2 '
                        'AND tags.id = taggings.tag_id '
                        'AND tags.id = ?', (collection_ret['index'],))
         for movie_id in cursor.fetchall():
@@ -225,13 +236,14 @@ def main():
     # Backup Database.
     backup_database(database_dir, database_backup_dir)
 
-    for current_movie_id in main_cursor.execute('SELECT id '
-                                                'FROM metadata_items '
-                                                'WHERE library_section_id = ? '
-                                                'AND metadata_type = 1 '
-                                                'ORDER BY title ASC '
-                                                'LIMIT ?', (library_key,
-                                                            str(global_settings.getint('modify_limit', 30)),)):
+    cursor.execute('SELECT id '
+                   'FROM metadata_items '
+                   'WHERE library_section_id = ? '
+                   'AND metadata_type = 1 '
+                   'ORDER BY title ASC '
+                   'LIMIT ?', (library_key, str(global_settings.getint('modify_limit', 30)),))
+
+    for current_movie_id in cursor.fetchall():
 
         movie = get_movie_data(current_movie_id[0])
 
@@ -471,7 +483,7 @@ def commit_to_database():
             command += ' ' + str(column) + ' = "' + str(value).replace('"', '') + '",'
         command = command[:-1]
         command += ' WHERE id = ' + str(metadata_id)
-        main_cursor.execute(command)
+        cursor.execute(command)
 
     for tagging_id, d in taggings_commits.items():
         if len(d) == 0:
@@ -481,7 +493,7 @@ def commit_to_database():
             command += ' ' + str(column) + ' = "' + str(value).replace('"', '') + '",'
         command = command[:-1]
         command += ' WHERE id = ' + str(tagging_id)
-        main_cursor.execute(command)
+        cursor.execute(command)
 
     for tag_id, d in tags_commits.items():
         if len(d) == 0:
@@ -491,7 +503,7 @@ def commit_to_database():
             command += ' ' + str(column) + ' = "' + str(value).replace('"', '') + '",'
         command = command[:-1]
         command += ' WHERE id = ' + str(tag_id)
-        main_cursor.execute(command)
+        cursor.execute(command)
 
     database.commit()
     database.close()
