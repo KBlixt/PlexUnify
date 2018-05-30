@@ -165,12 +165,10 @@ def main():
                 collection_ret['title'] = collection_ret['title'][:-(len(suffix) + 1)]
                 break
 
-        global database
-        global cursor
 
         collection_info = None
         created_collection = False
-        for i in range(100):
+        for i in range(5):
             time.sleep(1)
             cursor.execute('SELECT id, content_rating, user_fields, [index], hash '
                            'FROM metadata_items '
@@ -184,21 +182,18 @@ def main():
                         library.get(movie['title']).addCollection(collection_ret['title'])
                         library.get(movie['title']).reload()
                         created_collection = True
-
                         database.commit()
-                        # time.sleep(1)
-                        # database.close()
-                        # time.sleep(1)
-                        # database = sqlite3.connect(database_dir)
-                        # cursor = database.cursor()
 
                     else:
+                        print('Not allowed to create new collections. Skipping')
                         return None
                 else:
-                    print('waiting.')
+                    print('Waiting for database to add collection: "' + collection_ret['title'] + '"')
                     time.sleep(1)
+                    database.commit()
             else:
-                break
+                print('was unable to find collection: "' + collection_ret['title'] + '". Skipping')
+                return None
 
         collection_ret['metadata_id'] = collection_info[0]
         collection_ret['content_rating'] = collection_info[1]
