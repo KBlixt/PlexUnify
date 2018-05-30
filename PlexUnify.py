@@ -9,10 +9,10 @@ from shutil import copyfile
 from bs4 import BeautifulSoup
 
 # these packages need to be installed:
-# from plexapi.server import PlexServer
+from plexapi.server import PlexServer
 import sqlite3
 
-# global static variable:
+# global static variables:
 
 # config stuff
 config_file = 'config2.cfg'
@@ -26,16 +26,16 @@ if global_settings.getboolean('safety_lock', True):
 
 # tmdb stuff
 tmdb_api_key = global_settings['tmdb_api_key']
-main_language = global_settings['tmdb_main_language']
-secondary_language = global_settings['tmdb_secondary_language']
+main_language = global_settings['main_tmdb_language']
+secondary_language = global_settings['secondary_tmdb_language']
 
 # plex api stuff
 plex_server_ip_address = global_settings['plex_server_ip_address']
 plex_auth_token = global_settings['plex_auth_token']
-# plex_server = PlexServer(plex_server_ip_address, plex_auth_token)
-# library = plex_server.library.section(global_settings['library_to_modify'])
-# library_key = library.key
-library_key = "1"
+plex_server = PlexServer(plex_server_ip_address, plex_auth_token)
+library = plex_server.library.section(global_settings['library_to_modify'])
+library_key = library.key
+
 
 # database stuff
 database_dir = global_settings['database_dir']
@@ -43,7 +43,7 @@ database_backup_dir = global_settings['database_backup_dir']
 database = sqlite3.connect(database_dir)
 cursor = database.cursor()
 main_cursor = database.cursor()
-# end of global static variable.
+# end of global static variables.
 
 # global variables:
 
@@ -61,49 +61,39 @@ tags_commits = dict()            # list of changes to be made on tables. example
 
 def main():
 
-    global tmdb_movie_metadata
-    global secondary_tmdb_movie_metadata
-    global tmdb_collection_metadata
-    global secondary_tmdb_collection_metadata
+    def get_movie_data(metadata_id):
 
-    # Backup Database.
-    backup_database(database_dir, database_backup_dir)
+        cursor.execute('SELECT id, guid, title, original_title, tagline, content_rating, user_fields '
+                       'FROM metadata_items '
+                       'WHERE id = ? ', (metadata_id,))
+        movie_info = cursor.fetchone()
+        movie_ret = dict()
+        movie_ret['metadata_id'] = movie_info[0]
+        movie_ret['guid'] = movie_info[1]
+        movie_ret['title'] = movie_info[2]
+        movie_ret['original_title'] = movie_info[3]
+        movie_ret['tagline'] = movie_info[4]
+        movie_ret['content_rating'] = movie_info[5]
+        movie_ret['user_fields'] = movie_info[6]
+        movie_ret['user_fields_compare'] = movie_info[6]
 
-    for movie_tuple in main_cursor.execute('SELECT id, guid, title, original_title, '
-                                           'tagline, content_rating, user_fields '
-                                           'FROM metadata_items '
-                                           'WHERE library_section_id = ' + library_key + ' '
-                                           'AND metadata_type = 1 '
-                                           'ORDER BY title ASC '
-                                           'LIMIT ' + str(global_settings.getint('modify_limit', 30))):
-
-        movie = dict()
-        movie['metadata_id'] = movie_tuple[0]
-        movie['guid'] = movie_tuple[1]
-        movie['title'] = movie_tuple[2]
-        movie['original_title'] = movie_tuple[3]
-        movie['tagline'] = movie_tuple[4]
-        movie['content_rating'] = movie_tuple[5]
-        movie['user_fields'] = movie_tuple[6]
-        compare = movie_tuple[6]
-
-        if movie['user_fields'] != '':
-            movie['user_fields'] = movie_tuple[6].split('=')[1].split('|')
+        if movie_ret['user_fields'] != '':
+            movie_ret['user_fields'] = movie_info[6].split('=')[1].split('|')
         else:
-            movie['user_fields'] = list()
+            movie_ret['user_fields'] = list()
 
-        if ".themoviedb" in movie['guid']:
-            movie['tmdb_id'] = movie['guid'].split('//')[1].split('?')[0]
-            movie['imdb_id'] = None
-        elif ".imdb" in movie['guid']:
-            movie['tmdb_id'] = None
-            movie['imdb_id'] = movie['guid'].split('//')[1].split('?')[0]
+        if ".themoviedb" in movie_ret['guid']:
+            movie_ret['tmdb_id'] = movie_ret['guid'].split('//')[1].split('?')[0]
+            movie_ret['imdb_id'] = None
+        elif ".imdb" in movie_ret['guid']:
+            movie_ret['tmdb_id'] = None
+            movie_ret['imdb_id'] = movie_ret['guid'].split('//')[1].split('?')[0]
 
-        movie['metadata_items_jobs'] = dict()
+        movie_ret['metadata_items_jobs'] = dict()
 
-        process_movie(movie)
+        return movie_ret
 
-        process_collection(movie)
+    def report_movie_to_commit():
 
         temp = list()
         for value in movie['user_fields']:
@@ -114,9 +104,147 @@ def main():
         if len(movie['user_fields']) > 0:
             movie['user_fields'].sort(key=int)
             movie['user_fields'] = 'lockedFields=' + '|'.join(movie['user_fields'])
-            if movie['user_fields'] != compare:
+            if movie['user_fields'] != movie['user_fields_compare']:
                 movie['metadata_items_jobs']['user_fields'] = movie['user_fields']
         metadata_items_commits[movie['metadata_id']] = movie['metadata_items_jobs']
+
+        tmdb_movie_metadata = None
+        secondary_tmdb_movie_metadata = None
+
+    def get_collection_data():
+        settings = config['COLLECTIONS_SETTINGS']
+        if not settings.getboolean('force'):
+            if settings.getboolean('respect_lock'):
+                if any("16" == s for s in movie['user_fields']):
+                    return
+
+        collection_ret = dict()
+        collection_ret['name'] = None
+        collection_ret['movies_in_collection'] = list()
+        collection_ret['movies_in_collection'].append(movie)
+
+        if settings.getboolean('prefer_secondary_language'):
+            if secondary_tmdb_movie_metadata is None:
+                get_secondary_tmdb_movie_metadata(movie)
+            if secondary_tmdb_movie_metadata['belongs_to_collection'] is None:
+                return None
+            collection_ret['collection_id'] = secondary_tmdb_movie_metadata['belongs_to_collection']['id']
+            collection_ret['title'] = secondary_tmdb_movie_metadata['belongs_to_collection']['name']
+            get_secondary_tmdb_collection_metadata(collection_ret)
+            current_metadata_holder = secondary_tmdb_collection_metadata
+
+        else:
+            if tmdb_movie_metadata is None:
+                get_tmdb_movie_metadata(movie)
+            if tmdb_movie_metadata['belongs_to_collection'] is None:
+                return None
+            collection_ret['collection_id'] = tmdb_movie_metadata['belongs_to_collection']['id']
+            collection_ret['title'] = tmdb_movie_metadata['belongs_to_collection']['name']
+            get_tmdb_collection_metadata(collection_ret)
+            current_metadata_holder = tmdb_collection_metadata
+
+        movies_above_score_threshold = 0
+        total_score = 0
+        for coll_movie in current_metadata_holder['parts']:
+            if coll_movie['vote_average'] > settings.getfloat('minimum_movie_score'):
+                movies_above_score_threshold += 1
+            total_score += settings.getint('minimum_movie_score')
+
+        stat1 = total_score < settings.getint('minimum_total_score')
+        stat2 = movies_above_score_threshold < settings.getint('minimum_movie_count')
+        if not (stat1 and stat2):
+            if settings.getboolean('enable_automatic_deletion', False):
+                delete_collection(collection_ret['title'])
+            return None
+
+        suffix_list = settings.get('collection_suffixes_to_remove')
+        suffix_list.replace(' ', '')
+        suffix_list.split(',')
+        found = False
+        for suffix in suffix_list:
+            if collection_ret['title'].endswith(suffix):
+                collection_ret['title'] = collection_ret['title'][:-(len(suffix) + 1)]
+                found = True
+                break
+        if not found:
+            if settings.getboolean('add_new_collections'):
+                library.get(movie['title']).addCollection(collection_ret['title'])
+                library.get(movie['title']).reload()
+                time.sleep(1)
+            else:
+                return None
+
+        collection_info = None
+
+        for i in range(10):
+            time.sleep(1)
+            cursor.execute('SELECT id, content_rating, user_fields, [index], hash '
+                           'FROM metadata_items '
+                           'WHERE metadata_type = 18 '
+                           'AND library_section_id = ? '
+                           'AND title = ? ', (library_key, collection_ret['title'],))
+            collection_info = cursor.fetchone()
+            if collection_info is None:
+                time.sleep(1)
+            else:
+                break
+
+        collection_ret['metadata_id'] = collection_info[0]
+        collection_ret['content_rating'] = collection_info[1]
+        collection_ret['user_fields'] = collection_info[2]
+        collection_ret['index'] = collection_info[3]
+        collection_ret['hash'] = collection_info[4]
+
+        if collection_ret['user_fields'] != '':
+            collection_ret['user_fields'] = collection_info[2].split('=')[1].split('|')
+        else:
+            collection_ret['user_fields'] = list()
+
+        cursor.execute('SELECT taggings.metadata_item_id'
+                       'FROM tags '
+                       'INNER JOIN taggings '
+                       'ON tags.tag_type = 2'
+                       'AND tags.id = taggings.tag_id '
+                       'AND tags.id = ?', (collection_ret['index'],))
+        for movie_id in cursor.fetchall():
+            collection_ret['movies_in_collection'].append(get_movie_data(movie_id[0]))
+
+        if '29' not in collection_ret['user_fields']:
+            return collection_ret
+        else:
+            return None
+
+    def report_collection_to_commit():
+        pass
+
+    global tmdb_movie_metadata
+    global secondary_tmdb_movie_metadata
+    global tmdb_collection_metadata
+    global secondary_tmdb_collection_metadata
+
+    # Backup Database.
+    backup_database(database_dir, database_backup_dir)
+
+    for current_movie_id in main_cursor.execute('SELECT id '
+                                                'FROM metadata_items '
+                                                'WHERE library_section_id = ? '
+                                                'AND metadata_type = 1 '
+                                                'ORDER BY title ASC '
+                                                'LIMIT ?', (library_key,
+                                                            str(global_settings.getint('modify_limit', 30)),)):
+
+        movie = get_movie_data(current_movie_id[0])
+
+        process_movie(movie)
+
+        report_movie_to_commit()
+
+        collection = get_collection_data()
+
+        if config.getboolean('COLLECTIONS_SETTINGS', 'add_movies_to_collections') and collection is not None:
+            process_collection(collection)
+
+            report_collection_to_commit()
 
         tmdb_movie_metadata = None
         secondary_tmdb_movie_metadata = None
@@ -126,6 +254,8 @@ def main():
     # Commit to database.
     commit_to_database()
 
+    return
+
 
 def backup_database(source_dir, target_dir):
 
@@ -134,6 +264,14 @@ def backup_database(source_dir, target_dir):
 
 def process_movie(movie):
 
+    def check_main_language_metadata():
+        if tmdb_movie_metadata is None:
+            get_tmdb_movie_metadata(movie)
+
+    def check_secondary_language_metadata():
+        if secondary_tmdb_movie_metadata is None:
+            get_tmdb_movie_metadata(movie)
+
     def change_original_titles():
 
         if not settings.getboolean('force'):
@@ -141,16 +279,12 @@ def process_movie(movie):
                 if any("3" == s for s in movie['user_fields']):
                     return
 
-        if tmdb_movie_metadata is None:
-            if movie['tmdb_id'] is None:
-                get_tmdb_movie_id(movie)
-            get_tmdb_movie_metadata(movie, main_language)
-        if secondary_tmdb_movie_metadata is None:
-            get_secondary_tmdb_movie_metadata(movie, secondary_language)
+        check_main_language_metadata()
+        check_secondary_language_metadata()
 
         if tmdb_movie_metadata['title'] == secondary_tmdb_movie_metadata['title']:
             original_title = tmdb_movie_metadata['title']
-        elif not settings.getboolean('invert_title_positions'):
+        elif not settings.getboolean('prefer_secondary_language'):
             original_title = tmdb_movie_metadata['title'] + ' ' \
                               + settings['title_delimiter'] + ' ' \
                               + secondary_tmdb_movie_metadata['title']
@@ -160,7 +294,6 @@ def process_movie(movie):
                               + tmdb_movie_metadata['title']
 
         movie['metadata_items_jobs']['original_title'] = original_title
-
         if settings.getboolean('lock_after_completion') and '3' not in movie['user_fields']:
             movie['user_fields'].append('3')
 
@@ -176,7 +309,7 @@ def process_movie(movie):
                 return
 
         if movie['imdb_id'] is None:
-            get_tmdb_movie_metadata(movie, main_language)
+            get_tmdb_movie_metadata(movie)
         content_rating = get_imdb_content_rating(movie, settings['content_rating_country_code'])
 
         found = False
@@ -199,22 +332,19 @@ def process_movie(movie):
             if movie['tagline'] != '':
                 return
 
-        if tmdb_movie_metadata is None:
-            if movie['tmdb_id'] is None:
-                get_tmdb_movie_id(movie)
-            get_tmdb_movie_metadata(movie, main_language)
-        if secondary_tmdb_movie_metadata is None:
-            get_secondary_tmdb_movie_metadata(movie, secondary_language)
-
         if settings.getboolean('prefer_secondary_language'):
+            check_secondary_language_metadata()
             if secondary_tmdb_movie_metadata['tagline'] != '':
                 tagline = secondary_tmdb_movie_metadata['tagline']
             else:
+                check_main_language_metadata()
                 tagline = tmdb_movie_metadata['tagline']
         else:
+            check_main_language_metadata()
             if tmdb_movie_metadata['tagline'] != '':
                 tagline = tmdb_movie_metadata['tagline']
             else:
+                check_secondary_language_metadata()
                 tagline = secondary_tmdb_movie_metadata['tagline']
 
         if not tagline == '':
@@ -256,16 +386,16 @@ def process_movie(movie):
                         continue
 
                     elif rename_to.lower() not in movie['tags_list']:
-                        if movie['tags_list'][rename_from.lower()] in tags_commits:
-                            tags_commits[movie['tags_list'][rename_from.lower()]]['tag'] = rename_to.title()
-                        else:
-                            tags_commits[movie['tags_list'][rename_from.lower()]] = {'tag': rename_to.title()}
+                        add_to_commit_list(tags_commits,
+                                           movie['tags_list'][rename_from.lower()],
+                                           'tag',
+                                           rename_to.title())
 
                     elif movie['taggings_list'][tagging_id] == movie['tags_list'][rename_from.lower()]:
-                        if tagging_id in taggings_commits:
-                            taggings_commits[tagging_id]['tag_id'] = movie['tags_list'][rename_to.lower()]
-                        else:
-                            taggings_commits[tagging_id] = {'tag_id': movie['tags_list'][rename_to.lower()]}
+                        add_to_commit_list(taggings_commits,
+                                           tagging_id,
+                                           'tag_id',
+                                           movie['tags_list'][rename_to.lower()])
 
         if settings.getboolean('lock_after_completion') and '15' not in movie['user_fields']:
             movie['user_fields'].append('15')
@@ -297,30 +427,23 @@ def process_movie(movie):
         print(e)
 
     # convert genres.
-
     settings = config['GENRES_SETTINGS']
     if settings.getboolean('convert_genres', False):
         convert_genres()
 
-    # add to collection.
 
-
-def process_collection(movie):
+def process_collection(collection):
     pass
 
-    # add movie to collection.
+    # Add other movies into the collection.
 
-    # change name of the collection.
+    # Calculate content rating.
 
-    # change poster of the collection.
+    # Add overview.
 
-    # change artwork of the collection.
+    # Add Poster.
 
-    # change sort title of the collection.
-
-    # change content rating of the collection.
-
-    # add description of the collection.
+    # Add background art.
 
 
 def commit_to_database():
@@ -415,13 +538,16 @@ def get_tmdb_movie_id(movie):
     response.close()
 
 
-def get_tmdb_movie_metadata(movie, tmdb_language_code):
+def get_tmdb_movie_metadata(movie):
     global tmdb_movie_metadata
+
+    if movie['tmdb_id'] is None:
+        get_tmdb_movie_id(movie)
 
     response = retrieve_web_page('https://api.themoviedb.org/3/movie/'
                                  + movie['tmdb_id'] +
                                  '?api_key=' + tmdb_api_key +
-                                 '&language=' + tmdb_language_code, 'english movie metadata from tmdb')
+                                 '&language=' + main_language, 'Main language movie metadata from tmdb')
 
     tmdb_movie_metadata = json.loads(response.read().decode('utf-8'))
     if len(tmdb_movie_metadata['imdb_id']) != 9:
@@ -430,15 +556,39 @@ def get_tmdb_movie_metadata(movie, tmdb_language_code):
     response.close()
 
 
-def get_secondary_tmdb_movie_metadata(movie, tmdb_language_code):
+def get_secondary_tmdb_movie_metadata(movie):
     global secondary_tmdb_movie_metadata
 
     response = retrieve_web_page('https://api.themoviedb.org/3/movie/'
                                  + movie['tmdb_id'] +
                                  '?api_key=' + tmdb_api_key +
-                                 '&language=' + tmdb_language_code, 'foreign movie metadata from tmdb')
+                                 '&language=' + secondary_language, 'Secondary language movie metadata from tmdb')
 
     secondary_tmdb_movie_metadata = json.loads(response.read().decode('utf-8'))
+    response.close()
+
+
+def get_tmdb_collection_metadata(collection):
+    global tmdb_collection_metadata
+
+    response = retrieve_web_page('https://api.themoviedb.org/3/collection/' + str(collection['collection_id']) +
+                                 '?api_key=' + tmdb_api_key +
+                                 '&language=' + main_language, 'Main language collection metadata from tmdb')
+
+    tmdb_collection_metadata = json.loads(response.read().decode('utf-8'))
+
+    response.close()
+
+
+def get_secondary_tmdb_collection_metadata(collection):
+    global secondary_tmdb_collection_metadata
+
+    response = retrieve_web_page('https://api.themoviedb.org/3/collection/' + str(collection['collection_id']) +
+                                 '?api_key=' + tmdb_api_key +
+                                 '&language=' + secondary_language, 'Secondary language collection metadata from tmdb')
+
+    secondary_tmdb_collection_metadata = json.loads(response.read().decode('utf-8'))
+
     response.close()
 
 
@@ -458,6 +608,15 @@ def get_imdb_content_rating(movie, country):
     return cert
 
 
+def add_to_commit_list(commit_list, entry_id, key, value):
+
+    if entry_id in commit_list:
+        commit_list[entry_id][key] = value
+    else:
+        commit_list[entry_id] = {key: value}
+
+def delete_collection(title_name):
+    pass
 main()
 
 sys.exit()
