@@ -249,9 +249,9 @@ def main():
 
         process_movie(movie)
 
-        report_movie_to_commit()
-
         collection = get_collection_data()
+
+        report_movie_to_commit()
 
         if config.getboolean('COLLECTIONS_SETTINGS', 'add_movies_to_collections') and collection is not None:
             process_collection(collection)
