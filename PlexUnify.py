@@ -69,7 +69,8 @@ def main():
     # Backup Database.
     backup_database(database_dir, database_backup_dir)
 
-    for movie_tuple in main_cursor.execute('SELECT id, guid, title, original_title, tagline, content_rating, user_fields '
+    for movie_tuple in main_cursor.execute('SELECT id, guid, title, original_title, '
+                                           'tagline, content_rating, user_fields '
                                            'FROM metadata_items '
                                            'WHERE library_section_id = ' + library_key + ' '
                                            'AND metadata_type = 1 '
@@ -325,14 +326,19 @@ def process_collection(movie):
 def commit_to_database():
 
     if global_settings.getboolean('prompt_before_committing', True):
+        print('-----------------------------------------------------------')
         print('The script is now ready to write to your database.')
         print('Please turn off Plex media server until the script is done.')
         print('The write process is fairly quick.')
+        print('-----------------------------------------------------------')
         cont = input("Do you wish to proceed? yes/no > ")
         while cont.lower() not in ("yes", "no"):
             cont = input("Do you wish to proceed? yes/no > ")
         if cont == "no":
+            print('Exiting.')
+            database.close()
             sys.exit()
+        print('Committing...')
 
     for metadata_id, d in metadata_items_commits.items():
         if len(d) == 0:
@@ -366,7 +372,7 @@ def commit_to_database():
 
     database.commit()
     database.close()
-
+    print('-----------------------------------------------------------')
     print('The writing process is now over.')
     print('you may turn on your Plex server now.')
 
@@ -387,7 +393,6 @@ def retrieve_web_page(url, page_name='page'):
             if attempt > 8:
                 print('You might have lost internet connection.')
                 print('Breaking out of loop and committing')
-                print('----------------------------------------')
                 commit_to_database()
                 sys.exit()
 
