@@ -9,7 +9,6 @@ from urllib.request import urlopen
 from urllib.error import URLError, HTTPError
 from shutil import copyfile
 from bs4 import BeautifulSoup
-from distutils.dir_util import copy_tree
 from datetime import datetime
 
 # these packages need to be installed:
@@ -17,7 +16,6 @@ from plexapi.server import PlexServer
 import sqlite3
 
 # global static variables:
-
 # config stuff
 config_file = 'config2.cfg'
 with codecs.open(config_file, 'r', 'utf-8') as open_config_file:
