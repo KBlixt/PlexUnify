@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 
 # these packages need to be installed:
-from plexapi.server import PlexServer
+from plexapi.server import PlexServer  # todo: exclude plex server if not needed
 import sqlite3
 
 # global static variables:
@@ -29,7 +29,7 @@ if global_settings.getboolean('safety_lock', True):
 # tmdb stuff
 tmdb_api_key = global_settings['tmdb_api_key']
 main_language = global_settings['main_tmdb_language']
-secondary_language = global_settings['secondary_tmdb_language']
+secondary_language = global_settings['secondary_tmdb_language']  # todo: exclude plex server if not needed
 
 # plex api stuff
 plex_server_ip_address = global_settings['plex_server_ip_address']
@@ -63,7 +63,7 @@ tags_commits = dict()             # list of changes to be made on tables. exampl
 
 delete_commits = list()           # list of entries to be deleted. example: [20, 3201]
 
-taggings_insert_commits = dict()  # list of added entries to tables. example: {dict of added entries}
+taggings_insert_commits = dict()  # list of added entries to tables. example: 20: {dict of added entries}
 # end of global variables.
 
 
@@ -318,7 +318,7 @@ def process_movie(movie):
             get_secondary_tmdb_movie_metadata(movie)
 
     def change_original_titles():
-
+        # todo: keep the true original title instead of secondary language?
         if not settings.getboolean('force'):
             if settings.getboolean('respect_lock'):
                 if any("3" == s for s in movie['user_fields']):
@@ -326,7 +326,7 @@ def process_movie(movie):
 
         check_main_language_metadata()
         check_secondary_language_metadata()
-
+        # todo: change to "A in B or B in A"
         if tmdb_movie_metadata['title'] == secondary_tmdb_movie_metadata['title']:
             original_title = tmdb_movie_metadata['title']
         elif not settings.getboolean('prefer_secondary_language'):
@@ -614,7 +614,7 @@ def process_collection(collection):
 
         if current_metadata_holder['poster_path'] is not None:
             # get the poster and put it in place
-            download_dir = os.path.join(plex_home_dir,
+            download_dir = os.path.join(plex_home_dir,  # todo: combine into common method
                                         'Metadata',
                                         'Collections',
                                         collection['hash'][0],
@@ -643,7 +643,7 @@ def process_collection(collection):
                     continue
                     # get the poster and put it in place
 
-                download_dir = os.path.join(plex_home_dir,
+                download_dir = os.path.join(plex_home_dir,  # todo: combine into common method
                                             'Metadata',
                                             'Collections',
                                             collection['hash'][0],
@@ -684,7 +684,7 @@ def process_collection(collection):
         if current_metadata_holder['backdrop_path'] is None:
             # get the poster and put it in place
 
-            download_dir = os.path.join(plex_home_dir,
+            download_dir = os.path.join(plex_home_dir,  # todo: combine into common method
                                         'Metadata',
                                         'Collections',
                                         collection['hash'][0],
@@ -714,7 +714,7 @@ def process_collection(collection):
                     continue
                     # get the poster and put it in place
 
-                download_dir = os.path.join(plex_home_dir,
+                download_dir = os.path.join(plex_home_dir,  # todo: combine into common method
                                             'Metadata',
                                             'Collections',
                                             collection['hash'][0],
