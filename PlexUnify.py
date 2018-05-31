@@ -172,10 +172,9 @@ def main():
         movies_above_score_threshold = 0
         total_score = 0
         for coll_movie in current_metadata_holder['parts']:
-            if 16 in coll_movie['genre_ids']:
-                coll_movie['vote_average'] -= settings.getfloat('animated_movies_score_decrease')
-            if coll_movie['vote_average'] >= settings.getfloat('minimum_movie_score'):
-                movies_above_score_threshold += 1
+            if coll_movie['vote_count'] > settings.getfloat('vote_count_minimum'):
+                if coll_movie['vote_average'] >= settings.getfloat('minimum_movie_score'):
+                    movies_above_score_threshold += 1
             total_score += coll_movie['vote_average']
 
         stat1 = total_score >= settings.getint('minimum_total_score')
@@ -424,6 +423,11 @@ def process_movie(movie):
         movie['taggings_list'] = taggings_list
 
         for rename_to, rename_from_list in config.items('GENRES'):
+            while ', ' in rename_from_list:
+                rename_from_list = rename_from_list.replace(', ', ',')
+            while ' ,' in rename_from_list:
+                rename_from_list = rename_from_list.replace(' ,', ',')
+
             rename_from_list = rename_from_list.split(',')
             new_tag_id = None  # todo: (unchecked code)
             for rename_from in rename_from_list:
