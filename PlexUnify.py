@@ -4,6 +4,7 @@ import configparser
 import time
 import json
 import os
+from socket import timeout
 from urllib.request import urlopen
 from urllib.error import URLError, HTTPError
 from shutil import copyfile
@@ -42,7 +43,7 @@ library_key = library.key
 
 # database stuff
 # todo: add plex home directory.
-plex_home_dir = os.getcwd()
+plex_home_dir = global_settings.get('plex_home_directory')
 database_dir = os.path.join(os.getcwd(), global_settings['database_dir'])
 database_backup_dir = global_settings['database_backup_dir']
 database = sqlite3.connect(database_dir)
@@ -160,13 +161,6 @@ def main():
             get_tmdb_collection_metadata(collection_ret)
             current_metadata_holder = tmdb_collection_metadata
 
-        movies_above_score_threshold = 0
-        total_score = 0
-        for coll_movie in current_metadata_holder['parts']:
-            if coll_movie['vote_average'] > settings.getfloat('minimum_movie_score'):
-                movies_above_score_threshold += 1
-            total_score += settings.getint('minimum_movie_score')
-
         suffix_list = settings.get('collection_suffixes_to_remove')
         suffix_list = suffix_list.replace(' ', '')
         suffix_list = suffix_list.split(',')
@@ -175,8 +169,17 @@ def main():
                 collection_ret['title'] = collection_ret['title'][:-(len(suffix) + 1)]
                 break
 
-        stat1 = total_score > settings.getint('minimum_total_score')
-        stat2 = movies_above_score_threshold > settings.getint('minimum_movie_count')
+        movies_above_score_threshold = 0
+        total_score = 0
+        for coll_movie in current_metadata_holder['parts']:
+            if 16 in coll_movie['genre_ids']:
+                coll_movie['vote_average'] -= settings.getfloat('animated_movies_score_decrease')
+            if coll_movie['vote_average'] >= settings.getfloat('minimum_movie_score'):
+                movies_above_score_threshold += 1
+            total_score += coll_movie['vote_average']
+
+        stat1 = total_score >= settings.getint('minimum_total_score')
+        stat2 = movies_above_score_threshold >= settings.getint('minimum_movie_count')
         if not (stat1 and stat2):
             if settings.getboolean('enable_automatic_deletion', False):
                 delete_collection(collection_ret)
@@ -607,43 +610,56 @@ def process_collection(collection):
             current_metadata_holder = tmdb_collection_metadata
 
         if current_metadata_holder['poster_path'] is not None:
-            pass
             # get the poster and put it in place
+            download_dir = os.path.join(plex_home_dir,
+                                        'Metadata',
+                                        'Collections',
+                                        collection['hash'][0],
+                                        collection['hash'][1:] + '.bundle',
+                                        'Uploads',
+                                        'posters')
+            poster_dir = os.path.join(download_dir, 'g' + current_metadata_holder['poster_path'][1:])
 
-        download_dir = os.path.join(plex_home_dir,
-                                    'Metadata',
-                                    'Collections',
-                                    collection['hash'][0],
-                                    collection['hash'][1:] + '.bundle',
-                                    'Uploads',
-                                    'posters')
-        poster_dir = os.path.join(download_dir, 'g' + current_metadata_holder['poster_path'][1:])
+            if (not os.path.isfile(poster_dir)) or settings.getboolean('force'):
 
-        if (not os.path.isfile(poster_dir)) or settings.getboolean('force'):
+                if not os.path.isdir(download_dir):
+                    os.makedirs(download_dir, mode=0o777, exist_ok=True)
 
-            if not os.path.isdir(download_dir):
-                os.makedirs(download_dir, mode=0o770, exist_ok=True)
+                with open(poster_dir, 'wb') as download_folder:
 
-            with open(poster_dir, 'wb') as download_folder:
+                    response = retrieve_web_page('https://image.tmdb.org/t/p/original'
+                                                 + current_metadata_holder['poster_path'],
+                                                 'poster for collection')
+                    download_folder.write(response.read())
 
-                response = retrieve_web_page('https://image.tmdb.org/t/p/original'
-                                             + current_metadata_holder['poster_path'],
-                                             'poster for collection')
-                download_folder.write(response.read())
-
-        collection['metadata_items_jobs']['user_thumb_url'] = 'upload://posters/g' \
-                                                              + current_metadata_holder['poster_path'][1:]
+            collection['metadata_items_jobs']['user_thumb_url'] = 'upload://posters/g' \
+                                                                  + current_metadata_holder['poster_path'][1:]
         if settings.getboolean('add_movies_art_and_posters'):
-            for movie in collection['movies_in_collection']:
-                movie_poster_dir = os.path.join(plex_home_dir,
-                                                'Metadata',
-                                                'Movies',
-                                                movie['hash'][0],
-                                                movie['hash'][1:] + '.bundle',
-                                                'Contents',
-                                                '_combined',
-                                                'posters')
-                copy_tree(movie_poster_dir, download_dir)
+            for movie in current_metadata_holder['parts']:
+                if movie['poster_path'] is None:
+                    continue
+                    # get the poster and put it in place
+
+                download_dir = os.path.join(plex_home_dir,
+                                            'Metadata',
+                                            'Collections',
+                                            collection['hash'][0],
+                                            collection['hash'][1:] + '.bundle',
+                                            'Uploads',
+                                            'posters')
+                poster_dir = os.path.join(download_dir, 'g' + movie['poster_path'][1:])
+
+                if (not os.path.isfile(poster_dir)) or settings.getboolean('force'):
+
+                    if not os.path.isdir(download_dir):
+                        os.makedirs(download_dir, mode=0o777, exist_ok=True)
+
+                    with open(poster_dir, 'wb') as download_folder:
+
+                        response = retrieve_web_page('https://image.tmdb.org/t/p/original'
+                                                     + movie['poster_path'],
+                                                     'posters for collection')
+                        download_folder.write(response.read())
 
         if settings.getboolean('lock_after_completion') and '9' not in collection['user_fields']:
             collection['user_fields'].append('9')
@@ -662,45 +678,59 @@ def process_collection(collection):
             check_main_language_metadata()
             current_metadata_holder = tmdb_collection_metadata
 
-        if current_metadata_holder['backdrop_path'] is not None:
-            pass
+        if current_metadata_holder['backdrop_path'] is None:
             # get the poster and put it in place
 
-        download_dir = os.path.join(plex_home_dir,
-                                    'Metadata',
-                                    'Collections',
-                                    collection['hash'][0],
-                                    collection['hash'][1:] + '.bundle',
-                                    'Uploads',
-                                    'art')
-        art_dir = os.path.join(download_dir, 'g' + current_metadata_holder['backdrop_path'][1:])
+            download_dir = os.path.join(plex_home_dir,
+                                        'Metadata',
+                                        'Collections',
+                                        collection['hash'][0],
+                                        collection['hash'][1:] + '.bundle',
+                                        'Uploads',
+                                        'art')
+            art_dir = os.path.join(download_dir, 'g' + current_metadata_holder['backdrop_path'][1:])
 
-        if (not os.path.isfile(art_dir)) or settings.getboolean('force'):
+            if (not os.path.isfile(art_dir)) or settings.getboolean('force'):
 
-            if not os.path.isdir(download_dir):
-                os.makedirs(download_dir, mode=0o770, exist_ok=True)
+                if not os.path.isdir(download_dir):
+                    os.makedirs(download_dir, mode=0o777, exist_ok=True)
 
-            with open(art_dir, 'wb') as download_folder:
+                with open(art_dir, 'wb') as download_folder:
 
-                response = retrieve_web_page('https://image.tmdb.org/t/p/original'
-                                             + current_metadata_holder['backdrop_path'],
-                                             'art for collection')
-                download_folder.write(response.read())
+                    response = retrieve_web_page('https://image.tmdb.org/t/p/original'
+                                                 + current_metadata_holder['backdrop_path'],
+                                                 'art for collection')
+                    download_folder.write(response.read())
 
-        collection['metadata_items_jobs']['user_art_url'] = 'upload://art/g' \
-                                                            + current_metadata_holder['backdrop_path'][1:]
+            collection['metadata_items_jobs']['user_art_url'] = 'upload://art/g' \
+                                                                + current_metadata_holder['backdrop_path'][1:]
 
         if settings.getboolean('add_movies_art_and_posters'):
-            for movie in collection['movies_in_collection']:
-                movie_art_dir = os.path.join(plex_home_dir,
-                                             'Metadata',
-                                             'Movies',
-                                             movie['hash'][0],
-                                             movie['hash'][1:] + '.bundle',
-                                             'Contents',
-                                             '_combined',
-                                             'art')
-                copy_tree(movie_art_dir, download_dir)
+            for movie in current_metadata_holder['parts']:
+                if movie['backdrop_path'] is None:
+                    continue
+                    # get the poster and put it in place
+
+                download_dir = os.path.join(plex_home_dir,
+                                            'Metadata',
+                                            'Collections',
+                                            collection['hash'][0],
+                                            collection['hash'][1:] + '.bundle',
+                                            'Uploads',
+                                            'art')
+                art_dir = os.path.join(download_dir, 'g' + movie['backdrop_path'][1:])
+
+                if (not os.path.isfile(art_dir)) or settings.getboolean('force'):
+
+                    if not os.path.isdir(download_dir):
+                        os.makedirs(download_dir, mode=0o777, exist_ok=True)
+
+                    with open(art_dir, 'wb') as download_folder:
+
+                        response = retrieve_web_page('https://image.tmdb.org/t/p/original'
+                                                     + movie['backdrop_path'],
+                                                     'art for collection')
+                        download_folder.write(response.read())
 
         if settings.getboolean('lock_after_completion') and '10' not in collection['user_fields']:
             collection['user_fields'].append('10')
@@ -824,13 +854,21 @@ def retrieve_web_page(url, page_name='page'):
     print('Downloading ' + page_name + '.')
     for attempt in range(20):
         try:
-            response = urlopen(url)
+            response = urlopen(url, timeout=2)
             break
+        except timeout:
+            print('Failed to download ' + page_name + ' : timed out. Trying again in 2 seconds.')
+            time.sleep(2)
+            if attempt > 8:
+                print('You might have lost internet connection.')
+                print('Breaking out of loop and committing')
+                commit_to_database()
+                sys.exit()
         except HTTPError as e:
-            raise ValueError('Failed to download ' + page_name + ' : ' + e.msg)
+            raise ValueError('Failed to download ' + page_name + ' : ' + e.msg + '. Skipping.')
         except URLError:
-            print('Failed to download ' + page_name + '. Trying again in 10 seconds')
-            time.sleep(10)
+            print('Failed to download ' + page_name + '. Trying again in 2 seconds')
+            time.sleep(2)
             if attempt > 8:
                 print('You might have lost internet connection.')
                 print('Breaking out of loop and committing')
@@ -951,8 +989,6 @@ def delete_collection(collection):
         if not len(item[2].split('|')) < config.getint('COLLECTIONS_SETTINGS', 'delete_locked_less_than'):
             continue
         delete_commits.append([item[0], item[1]])
-
-
 
 main()
 
