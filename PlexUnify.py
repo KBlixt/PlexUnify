@@ -40,10 +40,10 @@ library_key = library.key
 
 
 # database stuff
-# todo: add plex home directory.
+
 plex_home_dir = global_settings.get('plex_home_directory')
-database_dir = os.path.join(os.getcwd(), global_settings['database_dir'])
-database_backup_dir = global_settings['database_backup_dir']
+database_dir = os.path.join(os.getcwd(), global_settings['database_dir'])  # todo: add plex db directory.
+database_backup_dir = global_settings['database_backup_dir']               # todo: add plex db.bak directory.
 database = sqlite3.connect(database_dir)
 cursor = database.cursor()
 main_cursor = database.cursor()
@@ -158,6 +158,8 @@ def main():
             collection_ret['title'] = tmdb_movie_metadata['belongs_to_collection']['name']
             get_tmdb_collection_metadata(collection_ret)
             current_metadata_holder = tmdb_collection_metadata
+
+        # todo: remove other language title?
 
         suffix_list = settings.get('collection_suffixes_to_remove')
         suffix_list = suffix_list.replace(' ', '')
@@ -427,7 +429,7 @@ def process_movie(movie):
                 rename_from_list = rename_from_list.replace(' ,', ',')
 
             rename_from_list = rename_from_list.split(',')
-            new_tag_id = None  # todo: (unchecked code)
+            new_tag_id = None
             for rename_from in rename_from_list:
                 for tagging_id in movie['taggings_list']:
 
@@ -437,20 +439,19 @@ def process_movie(movie):
                     if rename_from.lower() not in movie['tags_list']:
                         continue
 
-                    elif (rename_to.lower() not in movie['tags_list']) and (new_tag_id is None):  # todo: (uncheck code)
-                        # todo: when renaming multiple genres to a genera that doesn't exist will break it.
-                        # todo: (fixed, but unchecked)
+                    elif (rename_to.lower() not in movie['tags_list']) and (new_tag_id is None):
+
                         add_to_commit_list(tags_commits,
                                            movie['tags_list'][rename_from.lower()],
                                            'tag',
                                            rename_to.title())
-                        new_tag_id = movie['tags_list'][rename_from]  # todo: (unchecked code)
+                        new_tag_id = movie['tags_list'][rename_from]
 
-                    elif (rename_to.lower() not in movie['tags_list']) and (new_tag_id is not None):  # todo: (unchk cd)
-                        add_to_commit_list(taggings_commits,                                      # todo: (uncheck code)
-                                           tagging_id,                                            # todo: (uncheck code)
-                                           'tag_id',                                              # todo: (uncheck code)
-                                           new_tag_id)                                            # todo: (uncheck code)
+                    elif (rename_to.lower() not in movie['tags_list']) and (new_tag_id is not None):
+                        add_to_commit_list(taggings_commits,
+                                           tagging_id,
+                                           'tag_id',
+                                           new_tag_id)
 
                     elif movie['taggings_list'][tagging_id] == movie['tags_list'][rename_from.lower()]:
                         add_to_commit_list(taggings_commits,
@@ -992,6 +993,9 @@ def delete_collection(collection):
             continue
         delete_commits.append([item[0], item[1]])
 
+
 main()
 
+# todo: add tool that removes all old unaltered collections.
+# todo: add tool that removes all empty collections.
 sys.exit()
