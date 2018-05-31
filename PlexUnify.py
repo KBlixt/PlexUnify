@@ -9,6 +9,7 @@ from urllib.error import URLError, HTTPError
 from shutil import copyfile
 from bs4 import BeautifulSoup
 from distutils.dir_util import copy_tree
+from datetime import datetime
 
 # these packages need to be installed:
 from plexapi.server import PlexServer
@@ -60,6 +61,9 @@ metadata_items_commits = dict()   #
 taggings_commits = dict()         #
 tags_commits = dict()             # list of changes to be made on tables. example: 20: {dict of changes}
 
+
+delete_commits = list()           # list of entries to be deleted. example: [20, 3201]
+
 taggings_insert_commits = dict()  # list of added entries to tables. example: {dict of added entries}
 # end of global variables.
 
@@ -102,7 +106,6 @@ def main():
                 if 'user_fields' in metadata_items_commits[movie_ret['metadata_id']]['inherited_data']:
                     movie_ret['user_fields'] += \
                         metadata_items_commits[movie_ret['metadata_id']]['inherited_data']['user_fields']
-                movie_ret['metadata_id'].pop('inherited_data')
 
         return movie_ret
 
@@ -149,6 +152,8 @@ def main():
             if tmdb_movie_metadata is None:
                 get_tmdb_movie_metadata(movie)
             if tmdb_movie_metadata['belongs_to_collection'] is None:
+                if settings.getboolean('lock_after_completion') and '16' not in movie['user_fields']:
+                    movie['user_fields'].append('16')
                 return None
             collection_ret['collection_id'] = tmdb_movie_metadata['belongs_to_collection']['id']
             collection_ret['title'] = tmdb_movie_metadata['belongs_to_collection']['name']
@@ -162,13 +167,6 @@ def main():
                 movies_above_score_threshold += 1
             total_score += settings.getint('minimum_movie_score')
 
-        stat1 = total_score < settings.getint('minimum_total_score')
-        stat2 = movies_above_score_threshold < settings.getint('minimum_movie_count')
-        if not (stat1 and stat2):
-            if settings.getboolean('enable_automatic_deletion', False):
-                delete_collection()
-            return None
-
         suffix_list = settings.get('collection_suffixes_to_remove')
         suffix_list = suffix_list.replace(' ', '')
         suffix_list = suffix_list.split(',')
@@ -176,6 +174,13 @@ def main():
             if collection_ret['title'].lower().endswith(suffix.lower()):
                 collection_ret['title'] = collection_ret['title'][:-(len(suffix) + 1)]
                 break
+
+        stat1 = total_score > settings.getint('minimum_total_score')
+        stat2 = movies_above_score_threshold > settings.getint('minimum_movie_count')
+        if not (stat1 and stat2):
+            if settings.getboolean('enable_automatic_deletion', False):
+                delete_collection(collection_ret)
+            return None
 
         collection_info = None
         created_collection = False
@@ -192,6 +197,9 @@ def main():
                     if settings.getboolean('add_new_collections') or settings.getboolean('force'):
                         library.get(movie['title']).addCollection(collection_ret['title'])
                         created_collection = True
+
+                        if settings.getboolean('lock_after_completion') and '16' not in movie['user_fields']:
+                            movie['user_fields'].append('16')
 
                         database.commit()
 
@@ -229,11 +237,9 @@ def main():
                        'AND tags.id = taggings.tag_id '
                        'AND tags.id = ?', (collection_ret['index'],))
         for movie_id in cursor.fetchall():
-            if movie_id != movie['metadata_id']:
+            if movie_id[0] != movie['metadata_id']:
                 collection_ret['movies_in_collection'].append(get_movie_data(movie_id[0]))
 
-        if settings.getboolean('lock_after_completion'):
-            movie['user_fields'].append('16')
         return collection_ret
 
     def report_collection_to_commit():
@@ -276,12 +282,12 @@ def main():
 
         collection = get_collection_data()
 
-        report_movie_to_commit()
-
         if config.getboolean('COLLECTIONS_SETTINGS', 'add_movies_to_collections') and collection is not None:
             process_collection(collection)
 
             report_collection_to_commit()
+
+        report_movie_to_commit()
 
         tmdb_movie_metadata = None
         secondary_tmdb_movie_metadata = None
@@ -498,19 +504,20 @@ def process_collection(collection):
                 if settings.getboolean('respect_lock'):
                     if '16' in movie['user_fields']:
                         continue
-                if movie['metadata_id'] == collection['movies_in_collection'][0]['metadata_id']:
-                    continue
 
-            cursor.execute('SELECT id'
-                           'FROM taggings'
+            cursor.execute('SELECT id '
+                           'FROM taggings '
                            'WHERE metadata_item_id = ? '
                            'AND tag_id = ?', (movie['metadata_id'], collection['index'],))
             if cursor.fetchone() is not None:
+                if config['COLLECTIONS_SETTINGS'].getboolean('lock_after_completion') \
+                        and '16' not in movie['user_fields']:
+                    movie['user_fields'].append('16')
                 continue
 
             add_to_insert_commit_list(taggings_insert_commits,
                                       movie['metadata_id'],
-                                      'metadata_id',
+                                      'metadata_item_id',
                                       movie['metadata_id'])
             add_to_insert_commit_list(taggings_insert_commits,
                                       movie['metadata_id'],
@@ -522,8 +529,8 @@ def process_collection(collection):
                                       '10')
 
             add_to_commit_list(metadata_items_commits, movie['metadata_id'], 'inherited_data', {'user_fields': 16})
-            if settings.getboolean('lock_after_completion'):
-                collection['user_fields'].append('15')
+            if settings.getboolean('lock_after_completion') and '16' not in movie['user_fields']:
+                movie['user_fields'].append('16')
 
             print('added movie "' + movie['title'] + '" to the collection "' + collection['title'] + '"')
 
@@ -550,7 +557,7 @@ def process_collection(collection):
 
         if found:
             collection['metadata_items_jobs']['content_rating'] = collection['content_rating']
-            if settings.getboolean('lock_after_completion'):
+            if settings.getboolean('lock_after_completion') and '8' not in collection['user_fields']:
                 collection['user_fields'].append('8')
 
     def add_overview():
@@ -582,7 +589,7 @@ def process_collection(collection):
                     found = True
 
         if found:
-            if settings.getboolean('lock_after_completion'):
+            if settings.getboolean('lock_after_completion') and '7' not in collection['user_fields']:
                 collection['user_fields'].append('7')
 
     def add_poster():
@@ -638,7 +645,7 @@ def process_collection(collection):
                                                 'posters')
                 copy_tree(movie_poster_dir, download_dir)
 
-        if settings.getboolean('lock_after_completion'):
+        if settings.getboolean('lock_after_completion') and '9' not in collection['user_fields']:
             collection['user_fields'].append('9')
 
     def add_art():
@@ -680,8 +687,8 @@ def process_collection(collection):
                                              'art for collection')
                 download_folder.write(response.read())
 
-        collection['metadata_items_jobs']['user_thumb_url'] = 'upload://art/g' \
-                                                              + current_metadata_holder['backdrop_path'][1:]
+        collection['metadata_items_jobs']['user_art_url'] = 'upload://art/g' \
+                                                            + current_metadata_holder['backdrop_path'][1:]
 
         if settings.getboolean('add_movies_art_and_posters'):
             for movie in collection['movies_in_collection']:
@@ -695,7 +702,7 @@ def process_collection(collection):
                                              'art')
                 copy_tree(movie_art_dir, download_dir)
 
-        if settings.getboolean('lock_after_completion'):
+        if settings.getboolean('lock_after_completion') and '10' not in collection['user_fields']:
             collection['user_fields'].append('10')
 
     print('Processing collection: "' + collection['title'] + '"')
@@ -741,9 +748,21 @@ def commit_to_database():
             database.close()
             return
         print('Committing...')
+    timestamp = datetime.now().replace(microsecond=0).isoformat(' ')
+    for item in metadata_items_commits:
+        if 'inherited_data' in metadata_items_commits[item]:
+            metadata_items_commits[item].pop('inherited_data')
+        metadata_items_commits[item]['refreshed_at'] = timestamp
+        metadata_items_commits[item]['updated_at'] = timestamp
+
+    for item in tags_commits:
+        tags_commits[item]['updated_at'] = timestamp
+
+    for item in taggings_insert_commits:
+        taggings_insert_commits[item]['created_at'] = timestamp
 
     for metadata_id, d in metadata_items_commits.items():
-        if len(d) == 0:
+        if len(d) <= 2:
             continue
         command = 'UPDATE metadata_items SET'
         for column, value in d.items():
@@ -763,7 +782,7 @@ def commit_to_database():
         cursor.execute(command)
 
     for tag_id, d in tags_commits.items():
-        if len(d) == 0:
+        if len(d) <= 1:
             continue
         command = 'UPDATE tags SET'
         for column, value in d.items():
@@ -771,6 +790,26 @@ def commit_to_database():
         command = command[:-1]
         command += ' WHERE id = ' + str(tag_id)
         cursor.execute(command)
+
+    for tag_id, d in taggings_insert_commits.items():
+        if len(d) <= 1:
+            continue
+        command = 'INSERT INTO taggings '
+        command_column_names = '('
+        command_values = '('
+        for column, value in d.items():
+            command_column_names += column + ', '
+            command_values += '"' + str(value) + '", '
+
+        command_column_names = command_column_names[:-2] + ') '
+        command_values = command_values[:-2] + ') '
+        command += command_column_names + 'VALUES ' + command_values
+        cursor.execute(command)
+
+    for item in delete_commits:
+        cursor.execute('UPDATE metadata_items SET metadata_type = "10000" WHERE id = ?', (item[0],))
+        cursor.execute('DELETE FROM tags WHERE id = ?', (item[1],))
+        cursor.execute('DELETE FROM taggings WHERE tag_id = ? AND metadata_item_id = ?', (item[1], item[0],))
 
     database.commit()
     database.close()
@@ -782,7 +821,7 @@ def commit_to_database():
 def retrieve_web_page(url, page_name='page'):
 
     response = None
-
+    print('Downloading ' + page_name + '.')
     for attempt in range(20):
         try:
             response = urlopen(url)
@@ -902,8 +941,17 @@ def add_to_insert_commit_list(commit_list, entry_id, key, value):
         commit_list[entry_id] = {key: value}
 
 
-def delete_collection():
-    pass
+def delete_collection(collection):
+    cursor.execute('SELECT id, [index], user_fields '
+                   'FROM metadata_items '
+                   'WHERE metadata_type = 18 '
+                   'AND library_section_id = ? '
+                   'AND title = ?', (library_key, collection['title'],))
+    for item in cursor.fetchall():
+        if not len(item[2].split('|')) < config.getint('COLLECTIONS_SETTINGS', 'delete_locked_less_than'):
+            continue
+        delete_commits.append([item[0], item[1]])
+
 
 
 main()
