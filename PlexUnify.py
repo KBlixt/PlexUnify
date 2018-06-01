@@ -174,6 +174,9 @@ def main():
                     get_tmdb_movie_metadata(movie)
                 movie_metadata = tmdb_movie_metadata
 
+            collection_ret['collection_id'] = current_movie_metadata_holder['belongs_to_collection']['id']
+            collection_ret['title'] = current_movie_metadata_holder['belongs_to_collection']['name']
+
             if movie_metadata['belongs_to_collection'] is None:
                 return None
             else:
@@ -270,9 +273,6 @@ def main():
             return None
         current_movie_metadata_holder = metadata_sources[0]
         current_collection_metadata_holder = metadata_sources[1]
-
-        collection_ret['collection_id'] = current_movie_metadata_holder['belongs_to_collection']['id']
-        collection_ret['title'] = current_movie_metadata_holder['belongs_to_collection']['name']
 
         # todo: remove other language title?
 
