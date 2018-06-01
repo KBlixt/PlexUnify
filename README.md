@@ -1,28 +1,35 @@
-# Plexify
+# PlexUnify
 
-The script can do quite a few things, here is a list of the stuff it can do with a short description.
+The script can do quite a few things, here is a list of the stuff it can do with a short discription.
 
 - Add taglines to movies that miss them if they exist on tmdb. 
 - Add imdb content ratings and rename them.
 - Rename and merge genres.
-- Edit the original title to include the title of your language.
+- Edit the original title to inclue the title of your language.
 - Add movies to collections.
 - Add collection posters and art based on the poster and art the collection have on tmdb.
+- Add collection posters and art based on the poster and art of the movies in the collection.
 - Add content rating to collections.
 - Add summaries to collections.
 - Create new collections based on a filter (filtering based on the quantity and quality of movies in a collection)
 
 
+It also includes a few tools that are completely sepperate which if enabled will not run the other part of the script.
 
-Plexify is a script that edits the plex database directly.
+- Delete all movie collections that are empty.
+- Delete all movie collections that have 0 edited fields (orange lock) 
+
+A collection falling into one of these description is either useless or probably auto generated. but use with care anyway.
+
+PlexUnify is a script that edits the plex database directly. but I've used it quite extensivly and even missused it. runnig it 
 
 
 ----------
 ## Linux installation:
 
-download the Plexify.py file and put it somewhere. for example:
+download the PlexUnify.py file and put it somewhere. for example:
 ```sh
-    cd /opt && git clone https://github.com/KBlixt/Plexify.git && cd Plexify
+    cd /opt && git clone https://github.com/KBlixt/PlexUnify.git && cd PlexUnify
 ```
 
 you'll also need two python3 packages:
@@ -40,12 +47,12 @@ Unless you've specifically disabled it, the script will ask for permission to wr
 before it writes anything. So make sure to run it in a terminal.
 The code will run the smoothest if you run it as the user that runs plex. this should avoid any permission troubles.
 ```sh
-    sudo -u plex python3 Plexify.py
+    sudo -u plex python3 PlexUnify.py
 ```
 
 the script is split into two parts, the information gathering/processing part and the writing part. the script will run through
 all the information and once that's done it will write all at once, the write part is done in a fraction of a second so plex 
-downtime should be minimal. 
+downtime should be minimal. If you want the script to have the ability to generate new collections you'll need to have plex available to the plexapi while the information gathering/processing part is running.
 
 The script is not designed to be run automatically. But, I've writen to the database while plex have been running
 several times. as long as you restart plex after the script you should be fine.
@@ -68,7 +75,7 @@ general python issues.
 I really have no clue. if you setup the config file and install the python packages "plexapi" and "sqlite3" to python3
 somehow the script should run as long as you can run python3 code in a terminal.
 
-please let me know if it works/ doesn't work for you.
+please let me know if it works/ dosen't work for you.
 
 ----------
 
@@ -97,12 +104,12 @@ not using the "sort title" for a similar reasons that i'm using the "original ti
 that specific column in that specific table seems to be an issue. no idea why, but a warning pops up whenever I try to do it so 
 I left it alone... 
 
-...of course i didn't. I tried to change the stuff anyway. Nothing happened but for safety I left it out of the script. while it
+...ofcourse i didn't. I tried to change the stuff anyway. Nothing happend but for safety I left it out of the script. while it 
 might not have any short term damage who knows if this stuff cause damage in the long term.
 
 ## FAIR WARNING:
 
-This script will edit the PlexMediaServer database directly! Now, that being said. I've worked and abused my database quite
+This script will edit the PlexMediaServer database directly! Now, that being said. I've worked and abused my databsae quite
 extensively and not run into problems yet. and should you run into some serious issues you can replace the database
 with a backup.
 
