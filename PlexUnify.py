@@ -341,6 +341,7 @@ def main():
                                   movie['metadata_id'],
                                   '[index]',
                                   '10')
+        movie['user_fields_compare'] = 'force_push'
 
         return collection_ret
 
