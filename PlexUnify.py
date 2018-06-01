@@ -756,7 +756,7 @@ def process_collection(collection):
             current_metadata_holder = tmdb_collection_metadata
 
         if current_metadata_holder['poster_path'] is not None:
-            download_image(current_metadata_holder['poster_path'], 'poster', 'poster for collection')
+            download_image(current_metadata_holder['poster_path'], 'posters', 'poster for collection')
 
             collection['metadata_items_jobs']['user_thumb_url'] = 'upload://posters/g' \
                                                                   + current_metadata_holder['poster_path'][1:]
