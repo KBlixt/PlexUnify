@@ -157,6 +157,7 @@ def main():
         movie['user_fields'] = temp
 
         if len(movie['user_fields']) > 0:
+            movie['user_fields'] = list(set(movie['user_fields']))
             movie['user_fields'].sort(key=int)
             movie['user_fields'] = 'lockedFields=' + '|'.join(movie['user_fields'])
             if movie['user_fields'] != movie['user_fields_compare']:
@@ -166,6 +167,37 @@ def main():
             metadata_items_commits[movie['metadata_id']] = movie['metadata_items_jobs']
 
     def get_collection_data():
+
+        # def find_exising_collection():
+        #
+        #     cursor.execute('SELECT tags.name, taggings.metadata_item_id '
+        #                    'FROM tags '
+        #                    'INNER JOIN taggings '
+        #                    'ON taggings.tag_id = tags.id '
+        #                    'AND tags.tag_type = 2 '
+        #                    'WHERE taggings.metadata_item_id = ?', (movie['metadata_id'],))
+        #
+        #     for potential_coll in cursor.fetchall():
+        #         cursor.execute('SELECT title '
+        #                        'FROM metadata_items'
+        #                        'WHERE id = ?', (movie['metadata_id'],))
+        #         for potential_colls_suffix_removed in [potential_coll, cursor.fetchone()[0]]:
+        #             title = trim_suffix(title)
+        #             title_split = title.split(' ')
+        #             collection_title_split = collection_ret['title'].split(' ')
+        #             count = 0
+        #             for coll_word in collection_title_split:
+        #                 for pot_coll_word in title_split:
+        #                     if pot_coll_word in coll_word or coll_word in pot_coll_word:
+        #                         count += 1
+        #             if len(collection_title_split) == 1 and count == 1:
+        #                 return potential_coll
+        #
+        #
+        #             if count < len(collection_title_split):
+        #
+        #
+        #
 
         def get_metadata_holder():
 
@@ -196,14 +228,15 @@ def main():
 
             return coll_metadata
 
-        def trim_suffix():
+        def trim_suffix(title):
             suffix_list = settings.get('collection_suffixes_to_remove')
             suffix_list = suffix_list.replace(' ', '')
             suffix_list = suffix_list.split(',')
             for suffix in suffix_list:
-                if collection_ret['title'].lower().endswith(suffix.lower()):
-                    collection_ret['title'] = collection_ret['title'][:-(len(suffix) + 1)]
+                if title.lower().endswith(suffix.lower()):
+                    title = title[:-(len(suffix) + 1)]
                     break
+            return title
 
         def is_viable():
 
@@ -281,7 +314,7 @@ def main():
 
         # todo: remove other language title?
 
-        trim_suffix()
+        collection_ret['title'] = trim_suffix(collection_ret['title'])
 
         if not is_viable():
             return None
@@ -326,6 +359,7 @@ def main():
                 collection['user_fields'] = temp
 
         if len(collection['user_fields']) > 0:
+            collection['user_fields'] = list(set(collection['user_fields']))
             collection['user_fields'].sort(key=int)
             collection['user_fields'] = 'lockedFields=' + '|'.join(collection['user_fields'])
             if collection['user_fields'] != collection['user_fields_compare']:
@@ -439,18 +473,32 @@ def process_movie(movie):
                     return
             if any(movie['content_rating'] == s for s in config['RATINGS']):
                 return
-            if movie['content_rating'] == settings['unknown_content_rating']:
+            if movie['content_rating'].lower() == settings['unknown_content_rating'].lower():
                 return
 
         if movie['imdb_id'] is None:
             get_tmdb_movie_metadata(movie)
+            if movie['imdb_id'] is None:
+                if settings.getboolean('lock_after_completion') and '8' not in movie['user_fields']:
+                    movie['user_fields'].append('8')
+                return
+
         content_rating = get_imdb_content_rating(movie, settings['content_rating_country_code'])
 
         found = False
-        for to_rating, from_rating in config.items('RATINGS'):
-            if from_rating.lower() == content_rating.lower():
-                content_rating = to_rating
-                found = True
+        for to_rating, rename_from_list in config.items('RATINGS'):
+
+            while ', ' in rename_from_list:
+                rename_from_list = rename_from_list.replace(', ', ',')
+            while ' ,' in rename_from_list:
+                rename_from_list = rename_from_list.replace(' ,', ',')
+
+            rename_from_list = rename_from_list.split(',')
+
+            for from_rating in rename_from_list:
+                if from_rating.lower() == content_rating.lower():
+                    content_rating = to_rating
+                    found = True
         if not found:
             content_rating = '???'
 
@@ -585,13 +633,15 @@ def process_movie(movie):
 
 def process_collection(collection):
 
-    def mass_symlink_creation(source_folder, target_folder, id):
+    def mass_symlink_creation(source_folder, target_folder, id_tag):
+        if not os.path.isdir(target_folder):
+            os.makedirs(target_folder, mode=0o777, exist_ok=True)
         for file in os.listdir(source_folder):
             source_file = os.path.join(source_folder, file)
             if len(file) > 35:
-                target_file = os.path.join(target_folder, id + file[-35:])
+                target_file = os.path.join(target_folder, id_tag + file[-35:])
             else:
-                target_file = os.path.join(target_folder, id + file)
+                target_file = os.path.join(target_folder, id_tag + file)
             if not os.path.exists(target_file):
                 os.symlink(source_file, target_file)
 

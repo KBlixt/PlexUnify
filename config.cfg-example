@@ -42,6 +42,7 @@ modify_limit = -1
 # This category will edit the "Original Title" field in movies, the result will be:
 # <original title> :: <title in primary language>
 # Only <original title> will be used if the two are similar
+
 enable_category = false
 
 force = false
@@ -58,6 +59,7 @@ prefer_secondary_language = false
 [CONTENT_RATING_SETTINGS]
 # This category will edit the "content rating" field in movies.
 # It will look up the movie on imdb and use the imdb content rating
+
 enable_category = false
 
 force = false
@@ -72,19 +74,19 @@ unknown_content_rating = ???
 
 [RATINGS]
 # You'll need to list the available ratings. It's case insensitive so don't worry.
-# You can rename different ratings to the same if you wish. And you may add or remove from the list
+# You can rename different ratings to the same if you wish. separate them by commas.
 # List them in order for better collection integration (youngest to oldest). Here is how to use it:
-# <the name you wish to use> = <the real rating>
-se/Btl = Btl
-se/7+ = 7
-se/7+ = 8
-se/11+ = 11
+# <the name you wish to use> = <the real rating> , <some other real rating> , ....
+se/Btl = Btl,  bt
+se/7+ = 7 ,  8
+se/11+ =  11
 se/15+ = 15
 
 #-----------------------------------------------------------------------------------------------------------------------
 [TAGLINE_SETTINGS]
 # This category will add a tagline to the movie if it's missing one.
 # If it can't find a tagline in the main language it'll look up if the secondary language have one and use that.
+
 enable_category = false
 
 force = false
@@ -97,6 +99,7 @@ prefer_secondary_language = false
 #-----------------------------------------------------------------------------------------------------------------------
 [GENRES_SETTINGS]
 # This category will rename and/or merge your genres.
+
 enable_category = false
 
 force = false
@@ -135,6 +138,7 @@ western = Western
 # This section will edit the "collection" section. it will add the movie to a collection that it's a member of on tmdb.
 # It can create new collections if you allow it.
 # primarily it will edit collections
+
 enable_category = false
 
 force = false
@@ -143,7 +147,9 @@ lock_after_completion = true
 
 prefer_secondary_language = false
 add_new_collections = true
-collection_suffixes_to_remove = samlingen, samling, collection, collections
+
+# A list of suffixes that collections might have in your language that you wish to remove from their names.
+collection_suffixes_to_remove = samlingen, samling, collection
 
 #-----------------------------------------------------------------------------------------------------------------------
 # This section contains rules regarding collection creation and editing. Each setting will be explained.
@@ -173,6 +179,7 @@ delete_locked_less_than = 2
 [COLLECTIONS_SUMMARY_SETTINGS]
 # This category will add a summary to the "summary" field in collections. if it is missing one.
 # It will try find it in the primary language and then in the secondary language.
+
 enable_category = false
 
 force = false
@@ -195,6 +202,7 @@ lock_after_completion = true
 #-----------------------------------------------------------------------------------------------------------------------
 [COLLECTIONS_POSTER_SETTINGS]
 # This category will download the collection poster from tmdb and set it as the selected poster.
+
 enable_category = false
 
 force = false
@@ -209,6 +217,7 @@ symlink_movie_posters = true
 
 #-----------------------------------------------------------------------------------------------------------------------
 [COLLECTION_ARTWORK_SETTINGS]
+
 enable_category = false
 
 force = false
