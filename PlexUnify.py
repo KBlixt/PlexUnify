@@ -174,12 +174,13 @@ def main():
                     get_tmdb_movie_metadata(movie)
                 movie_metadata = tmdb_movie_metadata
 
-            collection_ret['collection_id'] = movie_metadata['belongs_to_collection']['id']
-            collection_ret['title'] = movie_metadata['belongs_to_collection']['name']
-
             if movie_metadata['belongs_to_collection'] is None:
                 return None
+
             else:
+                collection_ret['collection_id'] = movie_metadata['belongs_to_collection']['id']
+                collection_ret['title'] = movie_metadata['belongs_to_collection']['name']
+
                 if settings.getboolean('prefer_secondary_language'):
                     get_secondary_tmdb_collection_metadata(movie)
                     coll_metadata = secondary_tmdb_collection_metadata
