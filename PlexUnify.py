@@ -248,7 +248,8 @@ def main():
                 if coll_info is None:
                     if not created_collection:
                         if settings.getboolean('add_new_collections') or settings.getboolean('force'):
-                            library.get(movie['title']).addCollection(collection_ret['title'])
+                            library2 = plex_server.library.section(global_settings['library_to_modify'])
+                            library2.get(movie['title']).addCollection(collection_ret['title'])
                             created_collection = True
 
                             if settings.getboolean('lock_after_completion') and '16' not in movie['user_fields']:
