@@ -4,6 +4,7 @@ import configparser
 import time
 import json
 import os
+import errno
 from socket import timeout
 from urllib.request import urlopen
 from urllib.error import URLError, HTTPError
@@ -635,7 +636,12 @@ def process_collection(collection):
             else:
                 target_file = os.path.join(target_folder, id_tag + file)
             if not os.path.exists(target_file):
-                os.symlink(source_file, target_file)
+                try:
+                    os.symlink(source_file, target_file)
+                except OSError as broken_symlink:
+                    if broken_symlink.errno == errno.EEXIST:
+                        os.remove(target_file)
+                        os.symlink(source_file, target_file)
 
     def download_image(image_source, image_type, source_name):
 
