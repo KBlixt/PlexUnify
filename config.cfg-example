@@ -137,13 +137,13 @@ western = Western
 [COLLECTIONS_SETTINGS]
 # This section will edit the "collection" section. it will add the movie to a collection that it's a member of on tmdb.
 # It can create new collections if you allow it.
-# primarily it will edit collections
+# This need to be enabled if you wish to use any of the collection metadata editing.
 
 enable_category = false
 
 force = false
 respect_lock = true
-lock_after_completion = true
+# This section have no "lock_after_completion" option.
 
 prefer_secondary_language = false
 add_new_collections = true
@@ -155,7 +155,7 @@ collection_suffixes_to_remove = samlingen, samling, collection
 # This section contains rules regarding collection creation and editing. Each setting will be explained.
 # I find the default to be pretty good. Everything is based on data from TMDB.
 
-# A collection must have this manny movies to be created.
+# A collection must have this manny members in it to be created.
 minimum_movie_count = 2
 
 # A movie is only counted towards the "minimum_movie_count" if it has at least this manny votes.
@@ -193,6 +193,7 @@ prefer_secondary_language = false
 [COLLECTION_CONTENT_RATING_SETTINGS]
 # This category will set the content rating of the collection as the first content rating found
 # in the [RATINGS] table among the collections movies.
+
 enable_category = false
 
 force = false
@@ -230,8 +231,8 @@ add_movies_art = true
 
 # This setting will symlink all art available from the existing movies in the collection.
 symlink_movie_art = true
-#-----------------------------------------------------------------------------------------------------------------------
 
+#-----------------------------------------------------------------------------------------------------------------------
 [TOOLS]
 # a few useful tools. If any of them are used then the main script won't run.
 

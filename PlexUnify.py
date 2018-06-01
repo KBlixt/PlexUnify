@@ -166,36 +166,12 @@ def main():
 
     def get_collection_data():
 
-        # def find_exising_collection():
-        #
         #     cursor.execute('SELECT tags.name, taggings.metadata_item_id '
         #                    'FROM tags '
         #                    'INNER JOIN taggings '
         #                    'ON taggings.tag_id = tags.id '
         #                    'AND tags.tag_type = 2 '
         #                    'WHERE taggings.metadata_item_id = ?', (movie['metadata_id'],))
-        #
-        #     for potential_coll in cursor.fetchall():
-        #         cursor.execute('SELECT title '
-        #                        'FROM metadata_items'
-        #                        'WHERE id = ?', (movie['metadata_id'],))
-        #         for potential_colls_suffix_removed in [potential_coll, cursor.fetchone()[0]]:
-        #             title = trim_suffix(title)
-        #             title_split = title.split(' ')
-        #             collection_title_split = collection_ret['title'].split(' ')
-        #             count = 0
-        #             for coll_word in collection_title_split:
-        #                 for pot_coll_word in title_split:
-        #                     if pot_coll_word in coll_word or coll_word in pot_coll_word:
-        #                         count += 1
-        #             if len(collection_title_split) == 1 and count == 1:
-        #                 return potential_coll
-        #
-        #
-        #             if count < len(collection_title_split):
-        #
-        #
-        #
 
         def get_metadata_holder():
 
@@ -295,11 +271,6 @@ def main():
 
             return coll_info
 
-        if not settings.getboolean('force'):
-            if settings.getboolean('respect_lock'):
-                if any("16" == s for s in movie['user_fields']):
-                    return
-
         collection_ret = dict()
         collection_ret['name'] = None
         collection_ret['movies_in_collection'] = list()
@@ -309,8 +280,6 @@ def main():
 
         if current_collection_metadata_holder is None:
             return None
-
-        # todo: remove other language title?
 
         collection_ret['title'] = trim_suffix(collection_ret['title'])
 
@@ -345,6 +314,31 @@ def main():
         for movie_id in cursor.fetchall():
             if movie_id[0] != movie['metadata_id']:
                 collection_ret['movies_in_collection'].append(get_movie_data(movie_id[0]))
+
+        if not settings.getboolean('force'):
+            if settings.getboolean('respect_lock'):
+                if '16' in movie['user_fields']:
+                    return collection_ret
+
+        cursor.execute('SELECT id '
+                       'FROM taggings '
+                       'WHERE metadata_item_id = ? '
+                       'AND tag_id = ?', (movie['metadata_id'], collection['index'],))
+        if cursor.fetchone() is not None:
+            return
+
+        add_to_insert_commit_list(taggings_insert_commits,
+                                  movie['metadata_id'],
+                                  'metadata_item_id',
+                                  movie['metadata_id'])
+        add_to_insert_commit_list(taggings_insert_commits,
+                                  movie['metadata_id'],
+                                  'tag_id',
+                                  collection['index'])
+        add_to_insert_commit_list(taggings_insert_commits,
+                                  movie['metadata_id'],
+                                  '[index]',
+                                  '10')
 
         return collection_ret
 
@@ -672,6 +666,34 @@ def process_collection(collection):
         if secondary_tmdb_collection_metadata is None:
             get_secondary_tmdb_collection_metadata(collection)
 
+    def add_movie_to_collection():
+
+            if not settings.getboolean('force'):
+                if settings.getboolean('respect_lock'):
+                    if '16' in movie['user_fields']:
+                        return
+
+            cursor.execute('SELECT id '
+                           'FROM taggings '
+                           'WHERE metadata_item_id = ? '
+                           'AND tag_id = ?', (movie['metadata_id'], collection['index'],))
+            if cursor.fetchone() is not None:
+                return
+
+            add_to_insert_commit_list(taggings_insert_commits,
+                                      movie['metadata_id'],
+                                      'metadata_item_id',
+                                      movie['metadata_id'])
+            add_to_insert_commit_list(taggings_insert_commits,
+                                      movie['metadata_id'],
+                                      'tag_id',
+                                      collection['index'])
+            add_to_insert_commit_list(taggings_insert_commits,
+                                      movie['metadata_id'],
+                                      '[index]',
+                                      '10')
+
+
     def update_content_rating():
 
         if not settings.getboolean('force'):
@@ -809,6 +831,9 @@ def process_collection(collection):
             collection['user_fields'].append('10')
 
     print('Processing collection: "' + collection['title'] + '"')
+
+    settings = config['COLLECTIONS_SETTINGS']
+    add_other_movies_to_collection()
 
     # Calculate content rating.
     settings = config['COLLECTION_CONTENT_RATING_SETTINGS']
