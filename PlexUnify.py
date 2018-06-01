@@ -592,7 +592,7 @@ def process_collection(collection):
                 target_file = os.path.join(target_folder, id + file[-35:])
             else:
                 target_file = os.path.join(target_folder, id + file)
-            if os.path.exists(target_file):
+            if not os.path.exists(target_file):
                 os.symlink(source_file, target_file)
 
     def download_image(image_source, image_type, source_name):
