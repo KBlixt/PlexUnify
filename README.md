@@ -1,14 +1,31 @@
 # PlexUnify
-intro
+
+The script can do quite a few things, here is a list of the stuff it can do with a short discription.
+
+- Add taglines to movies that miss them if they exist on tmdb. 
+- Add imdb content ratings and rename them.
+- Rename and merge genres.
+- Edit the original title to inclue the title of your language.
+- Add movies to collections.
+- Add collection posters and art based on the poster and art the collection have on tmdb.
+- Add content rating to collections.
+- Add summaries to collections.
+- Create new collections based on a filter (filtering based on the quantity and quality of movies in a collection)
+
+
+
+PlexUnify is a script that edits the plex database directly.
+
+
 ----------
-### Linux installation:
+## Linux installation:
 
 download the PlexUnify.py file and put it somewhere. for example:
 ```sh
     cd /opt && git clone https://github.com/KBlixt/PlexUnify.git && cd PlexUnify
 ```
 
-you'll also need 2 python packages:
+you'll also need two python3 packages:
 ```sh
     python3 pip plexapi
     python3 pip sqlite3
@@ -26,12 +43,16 @@ The code will run the smoothest if you run it as the user that runs plex. this s
     sudo -u plex python3 PlexUnify.py
 ```
 
+the script is split into two parts, the information gathering/processing part and the writing part. the script will run through
+all the information and once that's done it will write all at once, the write part is done in a fraction of a second so plex 
+downtime should be minimal. 
+
 The script is not designed to be run automatically. But, I've writen to the database while plex have been running
 several times. as long as you restart plex after the script you should be fine.
 
 ----------
 
-### Other installations:
+## Other installations:
 
 #### for windows and mac:
 
@@ -46,6 +67,8 @@ general python issues.
 
 I really have no clue. if you setup the config file and install the python packages "plexapi" and "sqlite3" to python3
 somehow the script should run as long as you can run python3 code in a terminal.
+
+please let me know if it works/ dosen't work for you.
 
 ----------
 
@@ -65,9 +88,17 @@ Everything is disabled by default, So you won't do anything you've not actively 
 ----------
 ### Notes.
 
-I'm not sure
+I'm not actually deleting collections, I'm just moving them out of the way so they can't be seen. this is done because the 
+database dislikes deleting stuff in that specific table. removing tags and removing tags from movies is just fine but not 
+the metadata itself. for all intents and purposes they are gone though. if I learn a way to remove these entries from the 
+database it's easily patched in.
 
+not using the "sort title" for a similar reasons that i'm using the "original title" field have the exact same reason. editing 
+that specific column in that specific table seems to be an issue. no idea why, but a warning pops up whenever I try to do it so 
+I left it alone... 
 
+...ofcourse i didn't. I tried to change the stuff anyway. Nothing happend but for safety I left it out of the script. while it 
+might not have any short term damage who knows if this stuff cause damage in the long term.
 
 ## FAIR WARNING:
 
