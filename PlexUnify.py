@@ -346,7 +346,7 @@ def main():
                    'FROM metadata_items '
                    'WHERE library_section_id = ? '
                    'AND metadata_type = 1 '
-                   'ORDER BY created_at DESC ' 
+                   'ORDER BY title ASC ' 
                    'LIMIT ?', (library_key, str(global_settings.getint('modify_limit', 30)),))
     try:
         for current_movie_id in cursor.fetchall():
@@ -929,7 +929,7 @@ def retrieve_web_page(url, page_name='page'):
 
 
 def get_tmdb_movie_id(movie):
-    if len(tmdb_movie_metadata['imdb_id']) != 9:
+    if len(movie['imdb_id']) != 9:
         raise ValueError("Movie have no IMDB ID. Skipping.")
 
     response = retrieve_web_page('https://api.themoviedb.org/3/find/'

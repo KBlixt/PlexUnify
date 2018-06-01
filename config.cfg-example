@@ -145,7 +145,7 @@ prefer_secondary_language = false
 add_new_collections = true
 collection_suffixes_to_remove = samlingen, samling, collection, collections
 
------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
 # This section contains rules regarding collection creation and editing. Each setting will be explained.
 # I find the default to be pretty good. Everything is based on data from TMDB.
 
@@ -205,7 +205,7 @@ lock_after_completion = true
 add_movies_posters = true
 
 # this setting will symlink all posters available to the movies in the collection.
-symlink_movie_posters
+symlink_movie_posters = true
 
 #-----------------------------------------------------------------------------------------------------------------------
 [COLLECTION_ARTWORK_SETTINGS]
@@ -219,5 +219,5 @@ lock_after_completion = true
 add_movies_art = true
 
 # this setting will symlink all art available to the movies in the collection.
-symlink_movie_art
+symlink_movie_art = true
 #-----------------------------------------------------------------------------------------------------------------------
