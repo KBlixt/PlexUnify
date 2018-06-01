@@ -1106,7 +1106,6 @@ def tool_remove_empty_collections():
                        'WHERE tag_id = ?', (collection_id[1],))
         if cursor.fetchone() is None:
             delete_collection(collection)
-    commit_to_database()
 
 
 def tool_remove_unlocked_collections():
@@ -1121,7 +1120,6 @@ def tool_remove_unlocked_collections():
                 or collection_id[2] == '' \
                 or collection_id[2] == 'lockedFields=':
             delete_collection(collection)
-    commit_to_database()
 
 
 if config['TOOLS'].getboolean('delete_collections_no_movies'):
@@ -1131,5 +1129,7 @@ if config['TOOLS'].getboolean('delete_collections_no_locks'):
 if not (config['TOOLS'].getboolean('delete_collections_no_locks')
         or config['TOOLS'].getboolean('delete_collections_no_movies')):
     main()
+else:
+    commit_to_database()
 
 sys.exit()

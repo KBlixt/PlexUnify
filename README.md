@@ -36,7 +36,6 @@ download the Plexify.py file and put it somewhere. for example:
 you'll also need two python3 packages:
 ```sh
     python3 pip -m install plexapi
-    python3 pip -m install sqlite3
 ```
 
 Now you'll need to configure the config file. There is a file called config.cfg-example, use it as a template.
@@ -58,6 +57,10 @@ plex available to the plexapi while the information gathering/processing part is
 
 The script is not designed to be run automatically. But, I've writen to the database while plex have been running
 several times. as long as you restart plex after the script you should be fine.
+
+the script is not super fast. depending on how manny api requests you need to make per movie it'll take somewhere between
+2-6 seconds per movie depending on internet connection and other things. If you only use things that don't requires to
+download anything, then it'll be quite fast maybe 0.1 sec per movie.
 
 ----------
 
