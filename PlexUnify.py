@@ -323,7 +323,7 @@ def main():
         cursor.execute('SELECT id '
                        'FROM taggings '
                        'WHERE metadata_item_id = ? '
-                       'AND tag_id = ?', (movie['metadata_id'], collection['index'],))
+                       'AND tag_id = ?', (movie['metadata_id'], collection_ret['index'],))
         if cursor.fetchone() is not None:
             return collection_ret
 
@@ -666,34 +666,6 @@ def process_collection(collection):
         if secondary_tmdb_collection_metadata is None:
             get_secondary_tmdb_collection_metadata(collection)
 
-    def add_movie_to_collection():
-
-            if not settings.getboolean('force'):
-                if settings.getboolean('respect_lock'):
-                    if '16' in movie['user_fields']:
-                        return
-
-            cursor.execute('SELECT id '
-                           'FROM taggings '
-                           'WHERE metadata_item_id = ? '
-                           'AND tag_id = ?', (movie['metadata_id'], collection['index'],))
-            if cursor.fetchone() is not None:
-                return
-
-            add_to_insert_commit_list(taggings_insert_commits,
-                                      movie['metadata_id'],
-                                      'metadata_item_id',
-                                      movie['metadata_id'])
-            add_to_insert_commit_list(taggings_insert_commits,
-                                      movie['metadata_id'],
-                                      'tag_id',
-                                      collection['index'])
-            add_to_insert_commit_list(taggings_insert_commits,
-                                      movie['metadata_id'],
-                                      '[index]',
-                                      '10')
-
-
     def update_content_rating():
 
         if not settings.getboolean('force'):
@@ -833,7 +805,6 @@ def process_collection(collection):
     print('Processing collection: "' + collection['title'] + '"')
 
     settings = config['COLLECTIONS_SETTINGS']
-    add_other_movies_to_collection()
 
     # Calculate content rating.
     settings = config['COLLECTION_CONTENT_RATING_SETTINGS']
