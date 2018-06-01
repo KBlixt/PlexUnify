@@ -165,7 +165,7 @@ minimum_movie_vote_count = 500
 minimum_movie_score = 5.3
 
 # This will count the sum of all movie scores in the collection. if it falls below that score it's not created.
-minimum_total_score = 14
+minimum_total_score = 12
 
 # This will retroactively delete any collection it finds that would have failed the previous checklist.
 enable_automatic_deletion = false
