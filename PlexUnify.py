@@ -254,6 +254,7 @@ def main():
                             if plex_api_installed:
                                 library.get(movie['title']).addCollection(collection_ret['title'])
                                 database.commit()
+                                movie['user_fields_compare'] = 'force_push'
                             else:
                                 print('Unable to create new collection because Plex api is unavailable. Skipping')
                                 return None
@@ -341,7 +342,7 @@ def main():
                                   movie['metadata_id'],
                                   '[index]',
                                   '10')
-        movie['user_fields_compare'] = 'force_push'
+
 
         return collection_ret
 
