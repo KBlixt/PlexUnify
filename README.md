@@ -8,13 +8,20 @@ The script can do quite a few things, here is a list of the stuff it can do with
 - Edit the original title to inclue the title of your language.
 - Add movies to collections.
 - Add collection posters and art based on the poster and art the collection have on tmdb.
+- Add collection posters and art based on the poster and art of the movies in the collection.
 - Add content rating to collections.
 - Add summaries to collections.
 - Create new collections based on a filter (filtering based on the quantity and quality of movies in a collection)
 
 
+It also includes a few tools that are completely sepperate which if enabled will not run the other part of the script.
 
-PlexUnify is a script that edits the plex database directly.
+- Delete all movie collections that are empty.
+- Delete all movie collections that have 0 edited fields (orange lock) 
+
+A collection falling into one of these description is either useless or probably auto generated. but use with care anyway.
+
+PlexUnify is a script that edits the plex database directly. but I've used it quite extensivly and even missused it. runnig it 
 
 
 ----------
@@ -45,7 +52,7 @@ The code will run the smoothest if you run it as the user that runs plex. this s
 
 the script is split into two parts, the information gathering/processing part and the writing part. the script will run through
 all the information and once that's done it will write all at once, the write part is done in a fraction of a second so plex 
-downtime should be minimal. 
+downtime should be minimal. If you want the script to have the ability to generate new collections you'll need to have plex available to the plexapi while the information gathering/processing part is running.
 
 The script is not designed to be run automatically. But, I've writen to the database while plex have been running
 several times. as long as you restart plex after the script you should be fine.
