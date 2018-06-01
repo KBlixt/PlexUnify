@@ -323,7 +323,7 @@ def main():
         cursor.execute('SELECT id '
                        'FROM taggings '
                        'WHERE metadata_item_id = ? '
-                       'AND tag_id = ?', (movie['metadata_id'], collection_ret['index'],))
+                       'AND tag_id = ?', (movie['metadata_id'], collection['index'],))
         if cursor.fetchone() is not None:
             return collection_ret
 
@@ -803,8 +803,6 @@ def process_collection(collection):
             collection['user_fields'].append('10')
 
     print('Processing collection: "' + collection['title'] + '"')
-
-    settings = config['COLLECTIONS_SETTINGS']
 
     # Calculate content rating.
     settings = config['COLLECTION_CONTENT_RATING_SETTINGS']
