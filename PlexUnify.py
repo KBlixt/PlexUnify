@@ -17,7 +17,9 @@ from datetime import datetime
 # pip install sqlite3
 
 try:
+    # noinspection PyUnresolvedReferences
     from plexapi.server import PlexServer
+    # noinspection PyUnresolvedReferences
     from plexapi.exceptions import NotFound
     plex_api_installed = True
 except ImportError:
@@ -163,7 +165,10 @@ def main():
 
     def get_collection_data():
 
-        def get_metadata():
+        def get_metadata_holder():
+
+            global secondary_tmdb_collection_metadata
+            global tmdb_collection_metadata
 
             if settings.getboolean('prefer_secondary_language'):
                 if secondary_tmdb_movie_metadata is None:
@@ -177,16 +182,15 @@ def main():
             if movie_metadata['belongs_to_collection'] is None:
                 return None
 
-            else:
-                collection_ret['collection_id'] = movie_metadata['belongs_to_collection']['id']
-                collection_ret['title'] = movie_metadata['belongs_to_collection']['name']
+            collection_ret['collection_id'] = movie_metadata['belongs_to_collection']['id']
+            collection_ret['title'] = movie_metadata['belongs_to_collection']['name']
 
-                if settings.getboolean('prefer_secondary_language'):
-                    get_secondary_tmdb_collection_metadata(collection_ret)
-                    coll_metadata = secondary_tmdb_collection_metadata
-                else:
-                    get_tmdb_collection_metadata(collection_ret)
-                    coll_metadata = tmdb_collection_metadata
+            if settings.getboolean('prefer_secondary_language'):
+                get_secondary_tmdb_collection_metadata(collection_ret)
+                coll_metadata = secondary_tmdb_collection_metadata
+            else:
+                get_tmdb_collection_metadata(collection_ret)
+                coll_metadata = tmdb_collection_metadata
 
             return coll_metadata
 
@@ -269,11 +273,10 @@ def main():
         collection_ret['movies_in_collection'] = list()
         collection_ret['movies_in_collection'].append(movie)
 
-        metadata_sources = get_metadata()
+        current_collection_metadata_holder = get_metadata_holder()
 
-        if metadata_sources is None:
+        if current_collection_metadata_holder is None:
             return None
-        current_collection_metadata_holder = metadata_sources
 
         # todo: remove other language title?
 
@@ -299,16 +302,6 @@ def main():
             collection_ret['user_fields'] = list()
 
         collection_ret['metadata_items_jobs'] = dict()
-        #
-        # cursor.execute('SELECT taggings.metadata_item_id '
-        #                'FROM tags '
-        #                'INNER JOIN taggings '
-        #                'ON tags.tag_type = 2 '
-        #                'AND tags.id = taggings.tag_id '
-        #                'AND tags.id = ?', (collection_ret['index'],))
-        # for movie_id in cursor.fetchall():
-        #     if movie_id[0] != movie['metadata_id']:
-        #         collection_ret['movies_in_collection'].append(get_movie_data(movie_id[0]))
 
         return collection_ret
 
@@ -604,43 +597,6 @@ def process_collection(collection):
         if secondary_tmdb_collection_metadata is None:
             get_secondary_tmdb_collection_metadata(collection)
 
-    #
-    # def add_other_movies_to_collection():
-    #     for movie in collection['movies_in_collection']:
-    #         if not settings.getboolean('force'):
-    #             if settings.getboolean('respect_lock'):
-    #                 if '16' in movie['user_fields']:
-    #                     continue
-    #
-    #         cursor.execute('SELECT id '
-    #                        'FROM taggings '
-    #                        'WHERE metadata_item_id = ? '
-    #                        'AND tag_id = ?', (movie['metadata_id'], collection['index'],))
-    #         if cursor.fetchone() is not None:
-    #             if config['COLLECTIONS_SETTINGS'].getboolean('lock_after_completion') \
-    #                     and '16' not in movie['user_fields']:
-    #                 movie['user_fields'].append('16')
-    #             continue
-    #
-    #         add_to_insert_commit_list(taggings_insert_commits,
-    #                                   movie['metadata_id'],
-    #                                   'metadata_item_id',
-    #                                   movie['metadata_id'])
-    #         add_to_insert_commit_list(taggings_insert_commits,
-    #                                   movie['metadata_id'],
-    #                                   'tag_id',
-    #                                   collection['index'])
-    #         add_to_insert_commit_list(taggings_insert_commits,
-    #                                   movie['metadata_id'],
-    #                                   '[index]',
-    #                                   '10')
-    #
-    #         add_to_commit_list(metadata_items_commits, movie['metadata_id'], 'inherited_data', {'user_fields': 16})
-    #         if settings.getboolean('lock_after_completion') and '16' not in movie['user_fields']:
-    #             movie['user_fields'].append('16')
-    #
-    #         print('added movie "' + movie['title'] + '" to the collection "' + collection['title'] + '"')
-
     def update_content_rating():
 
         if not settings.getboolean('force'):
@@ -760,23 +716,35 @@ def process_collection(collection):
 
     # Calculate content rating.
     settings = config['COLLECTIONS_SETTINGS']
-    if settings.getboolean('update_content_rating'):
-        update_content_rating()
+    try:
+        if settings.getboolean('update_content_rating'):
+            update_content_rating()
+    except ValueError as e:
+        print(e)
 
     # Add overview.
     settings = config['COLLECTIONS_SETTINGS']
-    if settings.getboolean('add_overview'):
-        add_overview()
+    try:
+        if settings.getboolean('add_overview'):
+            add_overview()
+    except ValueError as e:
+        print(e)
 
     # Add Poster.
     settings = config['COLLECTIONS_SETTINGS']
-    if settings.getboolean('add_poster'):
-        add_poster()
+    try:
+        if settings.getboolean('add_poster'):
+            add_poster()
+    except ValueError as e:
+        print(e)
 
     # Add background art.
     settings = config['COLLECTIONS_SETTINGS']
-    if settings.getboolean('add_artwork'):
-        add_art()
+    try:
+        if settings.getboolean('add_artwork'):
+            add_art()
+    except ValueError as e:
+        print(e)
 
 
 def commit_to_database():
