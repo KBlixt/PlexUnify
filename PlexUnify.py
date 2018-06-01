@@ -66,12 +66,15 @@ if plex_api_installed:
             library = plex_server.library.section(global_settings['library_to_modify'])
             library_key = library.key
         except NotFound:
-            print('No library on Plex called "' + global_settings['library_to_modify'] + '"')
+            library_key = None
+            plex_api_installed = False
 
     except ConnectionError as conne:
         print(conne.args)
         print('Unable to connect to your Plex server.')
         plex_api_installed = False
+
+
 if library_key is None:
     cursor.execute('SELECT id '
                    'FROM library_sections '
