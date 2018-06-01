@@ -336,7 +336,7 @@ def main():
         add_to_insert_commit_list(taggings_insert_commits,
                                   movie['metadata_id'],
                                   'tag_id',
-                                  collection['index'])
+                                  collection_ret['index'])
         add_to_insert_commit_list(taggings_insert_commits,
                                   movie['metadata_id'],
                                   '[index]',
