@@ -28,6 +28,7 @@ The code will run the smoothest if you run it as the user that runs plex. this s
 
 The script is not designed to be run automatically. But, I've writen to the database while plex have been running
 several times. as long as you restart plex after the script you should be fine.
+
 ----------
 
 ### Other installations:
@@ -38,12 +39,14 @@ I have no real experience with running python on these systems. But as long as y
 and install the packages "plexapi" and "sqlite3" to python3 and run the script in a terminal using python3 you guys
 should be set. if you gus run into trouble just raise an issue and I'll look into it if I can as long as it isn't
 general python issues.
+
 ----------
 
 #### for NAS and other OS:
 
 I really have no clue. if you setup the config file and install the python packages "plexapi" and "sqlite3" to python3
 somehow the script should run as long as you can run python3 code in a terminal.
+
 ----------
 
 ### Config help:
@@ -59,11 +62,10 @@ en-US and there will be no harm done.
 
 Everything is disabled by default, So you won't do anything you've not actively chosen to use.
 
-
 ----------
 ### Notes.
 
-# I'm not sure
+I'm not sure
 
 
 
@@ -72,4 +74,5 @@ Everything is disabled by default, So you won't do anything you've not actively 
 This script will edit the PlexMediaServer database directly! Now, that being said. I've worked and abused my databsae quite
 extensively and not run into problems yet. and should you run into some serious issues you can replace the database
 with a backup.
+
 ----------
