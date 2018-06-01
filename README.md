@@ -2,7 +2,7 @@
 
 The script can do quite a few things, here is a list of the stuff it can do with a short description.
 
-- Add taglines to movies that miss them if they exist on tmdb. 
+- Add taglines to movies that miss them if they exist on tmdb. can use a fallback language.
 - Add imdb content ratings and rename them.
 - Rename and merge genres.
 - Edit the original title to include the title of your language.
@@ -14,7 +14,7 @@ The script can do quite a few things, here is a list of the stuff it can do with
 - Create new collections based on a filter (filtering based on the quantity and quality of movies in a collection)
 
 
-It also includes a few tools that are completely separate which if enabled will not run the other part of the script.
+It also includes a few tools that are completely separate which if enabled will not run the other parts of the script.
 
 - Delete all movie collections that are empty.
 - Delete all movie collections that have 0 edited fields (orange lock) 
