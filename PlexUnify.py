@@ -325,7 +325,7 @@ def main():
                        'WHERE metadata_item_id = ? '
                        'AND tag_id = ?', (movie['metadata_id'], collection['index'],))
         if cursor.fetchone() is not None:
-            return
+            return collection_ret
 
         add_to_insert_commit_list(taggings_insert_commits,
                                   movie['metadata_id'],
