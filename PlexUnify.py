@@ -336,29 +336,31 @@ def main():
                    'AND metadata_type = 1 '
                    'ORDER BY title ASC '  # todo: make it order by recently created
                    'LIMIT ?', (library_key, str(global_settings.getint('modify_limit', 30)),))
+    try:
+        for current_movie_id in cursor.fetchall():
 
-    for current_movie_id in cursor.fetchall():
+            movie = get_movie_data(current_movie_id[0])
 
-        movie = get_movie_data(current_movie_id[0])
+            process_movie(movie)
 
-        process_movie(movie)
+            if config.getboolean('COLLECTIONS_SETTINGS', 'add_movies_to_collections'):
 
-        if config.getboolean('COLLECTIONS_SETTINGS', 'add_movies_to_collections'):
+                collection = get_collection_data()
 
-            collection = get_collection_data()
+                if collection is not None:
+                    process_collection(collection)
 
-            if collection is not None:
-                process_collection(collection)
+                    report_collection_to_commit()
 
-                report_collection_to_commit()
+            report_movie_to_commit()
 
-        report_movie_to_commit()
+            tmdb_movie_metadata = None
+            secondary_tmdb_movie_metadata = None
+            tmdb_collection_metadata = None
+            secondary_tmdb_collection_metadata = None
 
-        tmdb_movie_metadata = None
-        secondary_tmdb_movie_metadata = None
-        tmdb_collection_metadata = None
-        secondary_tmdb_collection_metadata = None
-
+    except KeyboardInterrupt:
+        pass
     # Commit to database.
     commit_to_database()
 
