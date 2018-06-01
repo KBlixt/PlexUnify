@@ -250,7 +250,7 @@ def main():
             stat2 = movies_above_score_threshold >= settings.getint('minimum_movie_count')
             if not (stat1 and stat2):
                 if settings.getboolean('enable_automatic_deletion', False):
-                    delete_collection(collection_ret)
+                    delete_collection(collection_ret, settings.get('delete_locked_less_than'))
                 return False
 
             return True
@@ -1081,7 +1081,7 @@ def add_to_insert_commit_list(commit_list, entry_id, key, value):
         commit_list[entry_id] = {key: value}
 
 
-def delete_collection(collection):
+def delete_collection(collection, locks_limit=0):
     if 'metadata_id' in collection:
         cursor.execute('SELECT id, [index], user_fields '
                        'FROM metadata_items '
@@ -1095,12 +1095,13 @@ def delete_collection(collection):
                        'AND library_section_id = ? '
                        'AND title = ?', (library_key, collection['title'],))
     for item in cursor.fetchall():
-        if not len(item[2].split('|')) < config.getint('COLLECTIONS_SETTINGS', 'delete_locked_less_than'):
+        if not len(item[2].split('|')) > locks_limit:
             continue
         delete_commits.append([item[0], item[1]])
 
 
 def tool_remove_empty_collections():
+
     cursor.execute('SELECT id, [index] '
                    'FROM metadata_items ' 
                    'WHERE metadata_type = 18 '
@@ -1116,19 +1117,26 @@ def tool_remove_empty_collections():
 
 
 def tool_remove_unlocked_collections():
+
     cursor.execute('SELECT id, [index], user_fields '
                    'FROM metadata_items '
                    'WHERE metadata_type = 18 '
                    'AND library_section_id = ?', (library_key,))
     for collection_id in cursor.fetchall():
         collection = {'metadata_id': collection_id[0]}
-        if collection_id[2] is None:
-            delete_collection(collection)
-        elif collection_id[2] == '' or collection_id[2] == 'lockedFields=':
+        if collection_id[2] is None \
+                or collection_id[2] == '' \
+                or collection_id[2] == 'lockedFields=':
             delete_collection(collection)
     commit_to_database()
 
 
-main()
+if config['TOOLS'].getboolean('delete_collections_no_movies'):
+    tool_remove_empty_collections()
+if config['TOOLS'].getboolean('delete_collections_no_locks'):
+    tool_remove_unlocked_collections()
+if not (config['TOOLS'].getboolean('delete_collections_no_locks')
+        or config['TOOLS'].getboolean('delete_collections_no_movies')):
+    main()
 
 sys.exit()

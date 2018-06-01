@@ -212,11 +212,12 @@ lock_after_completion = true
 # this setting will download each of the members poster as well.
 add_movies_posters = true
 
-# this setting will symlink all posters available to the movies in the collection.
+# This setting will symlink all posters available from the existing movies in the collection.
 symlink_movie_posters = true
 
 #-----------------------------------------------------------------------------------------------------------------------
 [COLLECTION_ARTWORK_SETTINGS]
+# This category will download the collection art from tmdb and set it as the selected art.
 
 enable_category = false
 
@@ -224,9 +225,18 @@ force = false
 respect_lock = true
 lock_after_completion = true
 
-# this setting will download each of the members artwork as well.
+# This setting will download each of the members artwork as well.
 add_movies_art = true
 
-# this setting will symlink all art available to the movies in the collection.
+# This setting will symlink all art available from the existing movies in the collection.
 symlink_movie_art = true
 #-----------------------------------------------------------------------------------------------------------------------
+
+[TOOLS]
+# a few useful tools. If any of them are used then the main script won't run.
+
+# This tool will delete all collections with no movies in them.
+delete_collections_no_movies = false
+
+# This tool will delete all collections that have no locked fields. (mostly auto generated stuff)
+delete_collections_no_locks = false
