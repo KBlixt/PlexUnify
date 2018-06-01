@@ -174,8 +174,8 @@ def main():
                     get_tmdb_movie_metadata(movie)
                 movie_metadata = tmdb_movie_metadata
 
-            collection_ret['collection_id'] = current_movie_metadata_holder['belongs_to_collection']['id']
-            collection_ret['title'] = current_movie_metadata_holder['belongs_to_collection']['name']
+            collection_ret['collection_id'] = movie_metadata['belongs_to_collection']['id']
+            collection_ret['title'] = movie_metadata['belongs_to_collection']['name']
 
             if movie_metadata['belongs_to_collection'] is None:
                 return None
