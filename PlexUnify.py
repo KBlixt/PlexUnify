@@ -26,6 +26,7 @@ try:
     plex_api_installed = True
 except ImportError:
     plex_api_installed = False
+    print('Plex api is not installed.')
 
 
 # global static variables:
@@ -248,19 +249,14 @@ def main():
                 coll_info = cursor.fetchone()
                 if coll_info is None:
                     if not created_collection:
+                        created_collection = True
                         if settings.getboolean('add_new_collections') or settings.getboolean('force'):
-                            plex_server2 = PlexServer(plex_server_ip_address, plex_auth_token)
-                            library2 = plex_server2.library.section(global_settings['library_to_modify'])
-                            library2.get(movie['title']).addCollection(collection_ret['title'])
-                            created_collection = True
-
-                            if settings.getboolean('lock_after_completion') and '16' not in movie['user_fields']:
-                                if plex_api_installed:
-                                    movie['user_fields'].append('16')
-
-                                    database.commit()
-                                    print('Unable to create new collection because Plex api is unavailable. Skipping')
-                                    return None
+                            if plex_api_installed:
+                                library.get(movie['title']).addCollection(collection_ret['title'])
+                                database.commit()
+                            else:
+                                print('Unable to create new collection because Plex api is unavailable. Skipping')
+                                return None
 
                         else:
                             print('Not allowed to create new collections. Skipping')
