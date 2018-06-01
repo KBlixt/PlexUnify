@@ -188,7 +188,7 @@ def main():
                     get_tmdb_collection_metadata(collection_ret)
                     coll_metadata = tmdb_collection_metadata
 
-            return [movie_metadata, coll_metadata]
+            return coll_metadata
 
         def trim_suffix():
             suffix_list = settings.get('collection_suffixes_to_remove')
@@ -270,10 +270,10 @@ def main():
         collection_ret['movies_in_collection'].append(movie)
 
         metadata_sources = get_metadata()
+
         if metadata_sources is None:
             return None
-        current_movie_metadata_holder = metadata_sources[0]
-        current_collection_metadata_holder = metadata_sources[1]
+        current_collection_metadata_holder = metadata_sources
 
         # todo: remove other language title?
 
