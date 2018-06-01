@@ -182,10 +182,10 @@ def main():
                 collection_ret['title'] = movie_metadata['belongs_to_collection']['name']
 
                 if settings.getboolean('prefer_secondary_language'):
-                    get_secondary_tmdb_collection_metadata(movie)
+                    get_secondary_tmdb_collection_metadata(collection_ret)
                     coll_metadata = secondary_tmdb_collection_metadata
                 else:
-                    get_tmdb_collection_metadata(movie)
+                    get_tmdb_collection_metadata(collection_ret)
                     coll_metadata = tmdb_collection_metadata
 
             return [movie_metadata, coll_metadata]
