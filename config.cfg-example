@@ -77,8 +77,8 @@ unknown_content_rating = ???
 # You can rename different ratings to the same if you wish. separate them by commas.
 # List them in order for better collection integration (youngest to oldest). Here is how to use it:
 # <the name you wish to use> = <the real rating> , <some other real rating> , ....
-se/Btl = Btl,  bt
-se/7+ = 7 ,  8
+barntillåten = Btl,  bt
+whatever = 7 ,  8
 se/11+ =  11
 se/15+ = 15
 
