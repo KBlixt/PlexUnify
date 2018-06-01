@@ -45,10 +45,8 @@ secondary_language = global_settings['secondary_tmdb_language']
 
 # database stuff
 plex_home_dir = global_settings.get('plex_home_directory')
-database_dir = os.path.join(plex_home_dir,
-                            'Plug-in Support',
-                            'Databases',
-                            'com.plexapp.plugins.library.db')
+database_dir = os.path.join(plex_home_dir, 'Plug-in Support', 'Databases', 'com.plexapp.plugins.library.db')
+
 database_backup_dir = global_settings.get('database_backup_dir', os.path.join(plex_home_dir,
                                                                               'Plug-in Support',
                                                                               'Databases.PlexUnify.Backups',
