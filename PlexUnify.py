@@ -28,7 +28,7 @@ import sqlite3
 
 # global static variables:
 # config stuff
-config_file = 'config2.cfg'
+config_file = 'config.cfg'
 with codecs.open(config_file, 'r', 'utf-8') as open_config_file:
     config = configparser.ConfigParser()
     config.read_file(open_config_file)
