@@ -1,11 +1,11 @@
-# PlexUnify
+# Plexify
 
-The script can do quite a few things, here is a list of the stuff it can do with a short discription.
+The script can do quite a few things, here is a list of the stuff it can do with a short description.
 
 - Add taglines to movies that miss them if they exist on tmdb. 
 - Add imdb content ratings and rename them.
 - Rename and merge genres.
-- Edit the original title to inclue the title of your language.
+- Edit the original title to include the title of your language.
 - Add movies to collections.
 - Add collection posters and art based on the poster and art the collection have on tmdb.
 - Add content rating to collections.
@@ -14,15 +14,15 @@ The script can do quite a few things, here is a list of the stuff it can do with
 
 
 
-PlexUnify is a script that edits the plex database directly.
+Plexify is a script that edits the plex database directly.
 
 
 ----------
 ## Linux installation:
 
-download the PlexUnify.py file and put it somewhere. for example:
+download the Plexify.py file and put it somewhere. for example:
 ```sh
-    cd /opt && git clone https://github.com/KBlixt/PlexUnify.git && cd PlexUnify
+    cd /opt && git clone https://github.com/KBlixt/Plexify.git && cd Plexify
 ```
 
 you'll also need two python3 packages:
@@ -40,7 +40,7 @@ Unless you've specifically disabled it, the script will ask for permission to wr
 before it writes anything. So make sure to run it in a terminal.
 The code will run the smoothest if you run it as the user that runs plex. this should avoid any permission troubles.
 ```sh
-    sudo -u plex python3 PlexUnify.py
+    sudo -u plex python3 Plexify.py
 ```
 
 the script is split into two parts, the information gathering/processing part and the writing part. the script will run through
@@ -68,7 +68,7 @@ general python issues.
 I really have no clue. if you setup the config file and install the python packages "plexapi" and "sqlite3" to python3
 somehow the script should run as long as you can run python3 code in a terminal.
 
-please let me know if it works/ dosen't work for you.
+please let me know if it works/ doesn't work for you.
 
 ----------
 
@@ -97,12 +97,12 @@ not using the "sort title" for a similar reasons that i'm using the "original ti
 that specific column in that specific table seems to be an issue. no idea why, but a warning pops up whenever I try to do it so 
 I left it alone... 
 
-...ofcourse i didn't. I tried to change the stuff anyway. Nothing happend but for safety I left it out of the script. while it 
+...of course i didn't. I tried to change the stuff anyway. Nothing happened but for safety I left it out of the script. while it
 might not have any short term damage who knows if this stuff cause damage in the long term.
 
 ## FAIR WARNING:
 
-This script will edit the PlexMediaServer database directly! Now, that being said. I've worked and abused my databsae quite
+This script will edit the PlexMediaServer database directly! Now, that being said. I've worked and abused my database quite
 extensively and not run into problems yet. and should you run into some serious issues you can replace the database
 with a backup.
 
