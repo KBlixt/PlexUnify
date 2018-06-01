@@ -11,8 +11,6 @@ from requests.exceptions import ConnectionError
 from shutil import copyfile
 from bs4 import BeautifulSoup
 from datetime import datetime
-from shutil import copytree, ignore_patterns
-
 
 # these packages need to be installed:
 # pip install plexapi
@@ -736,6 +734,15 @@ def process_collection(collection):
 
     def add_poster():
 
+        if settings.getboolean('symlink_movie_posters'):
+            for movie in collection['movies_in_collection']:
+                symlink_from = os.path.join(plex_home_dir, 'Metadata', 'Movies', movie['hash'][0],
+                                            movie['hash'][1:] + '.bundle', 'Contents', '_combined', 'posters')
+                symlink_to = os.path.join(plex_home_dir, 'Metadata', 'Collections', collection['hash'][0],
+                                          collection['hash'][1:] + '.bundle', 'Uploads', 'posters')
+
+                mass_symlink_creation(symlink_from, symlink_to, 'g' + movie['hash'][:5])
+
         if not settings.getboolean('force'):
             if settings.getboolean('respect_lock'):
                 if '9' in collection['user_fields']:
@@ -760,19 +767,20 @@ def process_collection(collection):
                 if movie['poster_path'] is not None:
                     download_image(movie['poster_path'], 'poster', 'poster for collection')
 
-        if settings.getboolean('symlink_movie_posters'):
-            for movie in collection['movies_in_collection']:
-                symlink_from = os.path.join(plex_home_dir, 'Metadata', 'Movies', movie['hash'][0],
-                                            movie['hash'][1:] + '.bundle', 'Contents', '_combined', 'posters')
-                symlink_to = os.path.join(plex_home_dir, 'Metadata', 'Collections', collection['hash'][0],
-                                          collection['hash'][1:] + '.bundle', 'Uploads', 'posters')
-
-                mass_symlink_creation(symlink_from, symlink_to, 'g' + movie['hash'][:5])
-
         if settings.getboolean('lock_after_completion') and '9' not in collection['user_fields']:
             collection['user_fields'].append('9')
 
     def add_art():
+
+        if settings.getboolean('symlink_movie_art'):
+            for movie in collection['movies_in_collection']:
+                symlink_from = os.path.join(plex_home_dir, 'Metadata', 'Movies', movie['hash'][0],
+                                            movie['hash'][1:] + '.bundle', 'Contents', '_combined', 'art')
+                symlink_to = os.path.join(plex_home_dir, 'Metadata', 'Collections', collection['hash'][0],
+                                          collection['hash'][1:] + '.bundle', 'Uploads', 'art')
+
+                mass_symlink_creation(symlink_from, symlink_to, 'g' + movie['hash'][:5])
+
         if not settings.getboolean('force'):
             if settings.getboolean('respect_lock'):
                 if '10' in collection['user_fields']:
@@ -796,15 +804,6 @@ def process_collection(collection):
             for movie in current_metadata_holder['parts']:
                 if movie['backdrop_path'] is not None:
                     download_image(current_metadata_holder['backdrop_path'], 'art', 'art from movies')
-
-        if settings.getboolean('symlink_movie_art'):
-            for movie in collection['movies_in_collection']:
-                symlink_from = os.path.join(plex_home_dir, 'Metadata', 'Movies', movie['hash'][0],
-                                            movie['hash'][1:] + '.bundle', 'Contents', '_combined', 'art')
-                symlink_to = os.path.join(plex_home_dir, 'Metadata', 'Collections', collection['hash'][0],
-                                          collection['hash'][1:] + '.bundle', 'Uploads', 'art')
-
-                mass_symlink_creation(symlink_from, symlink_to, 'g' + movie['hash'][:5])
 
         if settings.getboolean('lock_after_completion') and '10' not in collection['user_fields']:
             collection['user_fields'].append('10')
