@@ -118,6 +118,6 @@ might not have any short term damage who knows if this stuff cause damage in the
 
 This script will edit the PlexMediaServer database directly! Now, that being said. I've worked and abused my database quite
 extensively and not run into problems yet. and should you run into some serious issues you can replace the database
-with a backup.
+with a backup. 
 
 ----------
