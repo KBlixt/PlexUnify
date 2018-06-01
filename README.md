@@ -35,8 +35,8 @@ download the Plexify.py file and put it somewhere. for example:
 
 you'll also need two python3 packages:
 ```sh
-    python3 pip install plexapi
-    python3 pip install sqlite3
+    python3 pip -m install plexapi
+    python3 pip -m install sqlite3
 ```
 
 Now you'll need to configure the config file. There is a file called config.cfg-example, use it as a template.
