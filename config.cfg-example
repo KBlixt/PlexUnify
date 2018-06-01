@@ -159,7 +159,7 @@ collection_suffixes_to_remove = samlingen, samling, collection
 minimum_movie_count = 2
 
 # A movie is only counted towards the "minimum_movie_count" if it has at least this manny votes.
-minimum_movie_vote_count = 400
+minimum_movie_vote_count = 500
 
 # A movie is only counted towards the "minimum_movie_count" if it has a better average score than this.
 minimum_movie_score = 5.3
