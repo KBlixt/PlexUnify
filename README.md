@@ -46,7 +46,9 @@ if you need further help look in the configuring section. Name the file "config.
 Unless you've specifically disabled it, the script will ask for permission to write to the database
 before it writes anything. So make sure to run it in a terminal.
 The code will run the smoothest if you run it as the user that runs plex. this should avoid any permission troubles.
+So make sure that the plex user actually can access the script.
 ```sh
+sudo chmod -R 755 /opt/PlexUnify
 sudo -u plex python3 PlexUnify.py
 ```
 
