@@ -11,6 +11,8 @@ from requests.exceptions import ConnectionError
 from shutil import copyfile
 from bs4 import BeautifulSoup
 from datetime import datetime
+from shutil import copytree, ignore_patterns
+
 
 # these packages need to be installed:
 # pip install plexapi
@@ -208,7 +210,7 @@ def main():
             movies_above_score_threshold = 0
             total_score = 0
             for coll_movie in current_collection_metadata_holder['parts']:
-                if coll_movie['vote_count'] > settings.getint('vote_count_minimum'):
+                if coll_movie['vote_count'] > settings.getint('minimum_movie_vote_count'):
                     if coll_movie['vote_average'] >= settings.getfloat('minimum_movie_score', 0):
                         movies_above_score_threshold += 1
                 total_score += coll_movie['vote_average']
@@ -227,7 +229,7 @@ def main():
             created_collection = False
             for i in range(5):
 
-                cursor.execute('SELECT id, content_rating, user_fields, [index], hash '
+                cursor.execute('SELECT id, content_rating, user_fields, [index], hash, summary '
                                'FROM metadata_items '
                                'WHERE metadata_type = 18 '
                                'AND library_section_id = ? '
@@ -262,7 +264,6 @@ def main():
 
             return coll_info
 
-        settings = config['COLLECTIONS_SETTINGS']
         if not settings.getboolean('force'):
             if settings.getboolean('respect_lock'):
                 if any("16" == s for s in movie['user_fields']):
@@ -295,6 +296,7 @@ def main():
         collection_ret['user_fields_compare'] = collection_info[2]
         collection_ret['index'] = collection_info[3]
         collection_ret['hash'] = collection_info[4]
+        collection_ret['summary'] = collection_info[5]
 
         if collection_ret['user_fields'] != '':
             collection_ret['user_fields'] = collection_info[2].split('=')[1].split('|')
@@ -302,6 +304,16 @@ def main():
             collection_ret['user_fields'] = list()
 
         collection_ret['metadata_items_jobs'] = dict()
+
+        cursor.execute('SELECT taggings.metadata_item_id '
+                       'FROM tags '
+                       'INNER JOIN taggings '
+                       'ON tags.tag_type = 2 '
+                       'AND tags.id = taggings.tag_id '
+                       'AND tags.id = ?', (collection_ret['index'],))
+        for movie_id in cursor.fetchall():
+            if movie_id[0] != movie['metadata_id']:
+                collection_ret['movies_in_collection'].append(get_movie_data(movie_id[0]))
 
         return collection_ret
 
@@ -334,7 +346,7 @@ def main():
                    'FROM metadata_items '
                    'WHERE library_section_id = ? '
                    'AND metadata_type = 1 '
-                   'ORDER BY title ASC '  # todo: make it order by recently created
+                   'ORDER BY created_at DESC ' 
                    'LIMIT ?', (library_key, str(global_settings.getint('modify_limit', 30)),))
     try:
         for current_movie_id in cursor.fetchall():
@@ -343,14 +355,17 @@ def main():
 
             process_movie(movie)
 
-            if config.getboolean('COLLECTIONS_SETTINGS', 'add_movies_to_collections'):
+            settings = config['COLLECTIONS_SETTINGS']
+            if settings.getboolean('enable_category'):
+                try:
+                    collection = get_collection_data()
+                except ValueError as e:
+                    print(e)
+                else:
+                    if collection is not None:
+                        process_collection(collection)
 
-                collection = get_collection_data()
-
-                if collection is not None:
-                    process_collection(collection)
-
-                    report_collection_to_commit()
+                        report_collection_to_commit()
 
             report_movie_to_commit()
 
@@ -541,7 +556,7 @@ def process_movie(movie):
     # change genres.
     try:
         settings = config['ORIGINAL_TITLE_SETTINGS']
-        if settings.getboolean('change_original_title', False):
+        if settings.getboolean('enable_category', False):
             change_original_titles()
     except ValueError as e:
         print(e)
@@ -549,7 +564,7 @@ def process_movie(movie):
     # change movie content rating.
     try:
         settings = config['CONTENT_RATING_SETTINGS']
-        if settings.getboolean('change_content_ratings', False):
+        if settings.getboolean('enable_category', False):
             change_content_ratings()
     except ValueError as e:
         print(e)
@@ -557,18 +572,28 @@ def process_movie(movie):
     # add missing tagline.
     try:
         settings = config['TAGLINE_SETTINGS']
-        if settings.getboolean('add_missing_tagline', False):
+        if settings.getboolean('enable_category', False):
             add_missing_tagline()
     except ValueError as e:
         print(e)
 
     # convert genres.
     settings = config['GENRES_SETTINGS']
-    if settings.getboolean('convert_genres', False):
+    if settings.getboolean('enable_category', False):
         convert_genres()
 
 
 def process_collection(collection):
+
+    def mass_symlink_creation(source_folder, target_folder, id):
+        for file in os.listdir(source_folder):
+            source_file = os.path.join(source_folder, file)
+            if len(file) > 35:
+                target_file = os.path.join(target_folder, id + file[-35:])
+            else:
+                target_file = os.path.join(target_folder, id + file)
+            if os.path.exists(target_file):
+                os.symlink(source_file, target_file)
 
     def download_image(image_source, image_type, source_name):
 
@@ -631,6 +656,8 @@ def process_collection(collection):
             if settings.getboolean('respect_lock'):
                 if '7' in collection['user_fields']:
                     return
+                if collection['summary'] != '':
+                    return
         found = False
         if settings.getboolean('prefer_secondary_language'):
             check_secondary_language_metadata()
@@ -678,10 +705,19 @@ def process_collection(collection):
             collection['metadata_items_jobs']['user_thumb_url'] = 'upload://posters/g' \
                                                                   + current_metadata_holder['poster_path'][1:]
 
-        if settings.getboolean('add_movies_art_and_posters'):
+        if settings.getboolean('add_movies_posters'):
             for movie in current_metadata_holder['parts']:
                 if movie['poster_path'] is not None:
                     download_image(movie['poster_path'], 'poster', 'poster for collection')
+
+        if settings.getboolean('symlink_movie_posters'):
+            for movie in collection['movies_in_collection']:
+                symlink_from = os.path.join(plex_home_dir, 'Metadata', 'Movies', movie['hash'][0],
+                                            movie['hash'][1:] + '.bundle', 'Contents', '_combined', 'posters')
+                symlink_to = os.path.join(plex_home_dir, 'Metadata', 'Collections', collection['hash'][0],
+                                          collection['hash'][1:] + '.bundle', 'Uploads', 'posters')
+
+                mass_symlink_creation(symlink_from, symlink_to, 'g' + movie['hash'][:5])
 
         if settings.getboolean('lock_after_completion') and '9' not in collection['user_fields']:
             collection['user_fields'].append('9')
@@ -706,10 +742,19 @@ def process_collection(collection):
             collection['metadata_items_jobs']['user_art_url'] = 'upload://art/g' \
                                                                 + current_metadata_holder['backdrop_path'][1:]
 
-        if settings.getboolean('add_movies_art_and_posters'):
+        if settings.getboolean('add_movies_art'):
             for movie in current_metadata_holder['parts']:
                 if movie['backdrop_path'] is not None:
                     download_image(current_metadata_holder['backdrop_path'], 'art', 'art from movies')
+
+        if settings.getboolean('symlink_movie_art'):
+            for movie in collection['movies_in_collection']:
+                symlink_from = os.path.join(plex_home_dir, 'Metadata', 'Movies', movie['hash'][0],
+                                            movie['hash'][1:] + '.bundle', 'Contents', '_combined', 'art')
+                symlink_to = os.path.join(plex_home_dir, 'Metadata', 'Collections', collection['hash'][0],
+                                          collection['hash'][1:] + '.bundle', 'Uploads', 'art')
+
+                mass_symlink_creation(symlink_from, symlink_to, 'g' + movie['hash'][:5])
 
         if settings.getboolean('lock_after_completion') and '10' not in collection['user_fields']:
             collection['user_fields'].append('10')
@@ -717,33 +762,33 @@ def process_collection(collection):
     print('Processing collection: "' + collection['title'] + '"')
 
     # Calculate content rating.
-    settings = config['COLLECTIONS_SETTINGS']
+    settings = config['COLLECTION_CONTENT_RATING_SETTINGS']
     try:
-        if settings.getboolean('update_content_rating'):
+        if settings.getboolean('enable_category'):
             update_content_rating()
     except ValueError as e:
         print(e)
 
     # Add overview.
-    settings = config['COLLECTIONS_SETTINGS']
+    settings = config['COLLECTIONS_SUMMARY_SETTINGS']
     try:
-        if settings.getboolean('add_overview'):
+        if settings.getboolean('enable_category'):
             add_overview()
     except ValueError as e:
         print(e)
 
     # Add Poster.
-    settings = config['COLLECTIONS_SETTINGS']
+    settings = config['COLLECTIONS_POSTER_SETTINGS']
     try:
-        if settings.getboolean('add_poster'):
+        if settings.getboolean('enable_category'):
             add_poster()
     except ValueError as e:
         print(e)
 
     # Add background art.
-    settings = config['COLLECTIONS_SETTINGS']
+    settings = config['COLLECTION_ARTWORK_SETTINGS']
     try:
-        if settings.getboolean('add_artwork'):
+        if settings.getboolean('enable_category'):
             add_art()
     except ValueError as e:
         print(e)
