@@ -18,7 +18,7 @@ secondary_tmdb_language = en-US
 
 # The home directory for plex is required. Backups will be stored in an adjacent folder to the database.
 # You may change the backup folder and the quantity, Uncomment the option and specify it.
-plex_home_dir = /var/lib/plexmediaserver/Library/Application Support/Plex Media Server/
+plex_home_directory = /var/lib/plexmediaserver/Library/Application Support/Plex Media Server/
 #database_backup_dir = /some/dir/Database-Backup
 #backups_to_keep = 5
 
