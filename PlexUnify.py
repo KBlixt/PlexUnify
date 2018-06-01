@@ -16,7 +16,6 @@ import sqlite3
 
 # these packages need to be installed:
 # pip install plexapi
-# pip install sqlite3
 
 try:
     # noinspection PyUnresolvedReferences

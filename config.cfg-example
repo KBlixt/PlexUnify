@@ -156,16 +156,16 @@ collection_suffixes_to_remove = samlingen, samling, collection
 # I find the default to be pretty good. Everything is based on data from TMDB.
 
 # A collection must have this manny members in it to be created.
-minimum_movie_count = 2
+minimum_movie_count = 3
 
 # A movie is only counted towards the "minimum_movie_count" if it has at least this manny votes.
-minimum_movie_vote_count = 500
+minimum_movie_vote_count = 700
 
 # A movie is only counted towards the "minimum_movie_count" if it has a better average score than this.
-minimum_movie_score = 5.3
+minimum_movie_score = 5.6
 
 # This will count the sum of all movie scores in the collection. if it falls below that score it's not created.
-minimum_total_score = 12
+minimum_total_score = 20
 
 # This will retroactively delete any collection it finds that would have failed the previous checklist.
 enable_automatic_deletion = false
