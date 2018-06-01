@@ -30,12 +30,12 @@ PlexUnify is a script that edits the plex database directly. but I've used it qu
 
 download the PlexUnify.py file and put it somewhere. for example:
 ```sh
-    cd /opt && git clone https://github.com/KBlixt/PlexUnify.git && cd PlexUnify
+cd /opt && git clone https://github.com/KBlixt/PlexUnify.git && cd PlexUnify
 ```
 
 you'll also need two python3 packages:
 ```sh
-    python3 pip -m install plexapi
+python3 pip -m install plexapi
 ```
 
 Now you'll need to configure the config file. There is a file called config.cfg-example, use it as a template.
@@ -47,7 +47,7 @@ Unless you've specifically disabled it, the script will ask for permission to wr
 before it writes anything. So make sure to run it in a terminal.
 The code will run the smoothest if you run it as the user that runs plex. this should avoid any permission troubles.
 ```sh
-    sudo -u plex python3 PlexUnify.py
+sudo -u plex python3 PlexUnify.py
 ```
 
 the script is split into two parts, the information gathering/processing part and the writing part. the script will run through
