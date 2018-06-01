@@ -11,6 +11,7 @@ from requests.exceptions import ConnectionError
 from shutil import copyfile
 from bs4 import BeautifulSoup
 from datetime import datetime
+import sqlite3
 
 # these packages need to be installed:
 # pip install plexapi
@@ -24,7 +25,7 @@ try:
     plex_api_installed = True
 except ImportError:
     plex_api_installed = False
-import sqlite3
+
 
 # global static variables:
 # config stuff
@@ -374,34 +375,32 @@ def main():
                    'AND metadata_type = 1 '
                    'ORDER BY title ASC ' 
                    'LIMIT ?', (library_key, str(global_settings.getint('modify_limit', 30)),))
-    try:
-        for current_movie_id in cursor.fetchall():
 
-            movie = get_movie_data(current_movie_id[0])
+    for current_movie_id in cursor.fetchall():
 
-            process_movie(movie)
+        movie = get_movie_data(current_movie_id[0])
 
-            settings = config['COLLECTIONS_SETTINGS']
-            if settings.getboolean('enable_category'):
-                try:
-                    collection = get_collection_data()
-                except ValueError as e:
-                    print(e)
-                else:
-                    if collection is not None:
-                        process_collection(collection)
+        process_movie(movie)
 
-                        report_collection_to_commit()
+        settings = config['COLLECTIONS_SETTINGS']
+        if settings.getboolean('enable_category'):
+            try:
+                collection = get_collection_data()
+            except ValueError as e:
+                print(e)
+            else:
+                if collection is not None:
+                    process_collection(collection)
 
-            report_movie_to_commit()
+                    report_collection_to_commit()
 
-            tmdb_movie_metadata = None
-            secondary_tmdb_movie_metadata = None
-            tmdb_collection_metadata = None
-            secondary_tmdb_collection_metadata = None
+        report_movie_to_commit()
 
-    except KeyboardInterrupt:
-        pass
+        tmdb_movie_metadata = None
+        secondary_tmdb_movie_metadata = None
+        tmdb_collection_metadata = None
+        secondary_tmdb_collection_metadata = None
+
     # Commit to database.
     commit_to_database()
 
