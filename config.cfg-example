@@ -1,0 +1,223 @@
+[GLOBAL_SETTINGS]
+
+# This must be false, otherwise nothing will run.
+safety_lock = false
+
+# IP to plex server and an plex auth token is required to make collection creating available.
+# You can skip this if you don't need to create new collections.
+plex_server_ip_address = http://localhost:32400
+plex_auth_token =
+
+
+# An TMDB api key is needed for everything except genre renaming.
+# Specify you're main language and a fallback language, en-US is recommended fallback language.
+tmdb_api_key = 12345676890abcdefghijklmnopqrestuvxyz
+main_tmdb_language = sv-SE
+secondary_tmdb_language = en-US
+
+
+# The home directory for plex is required. Backups will be stored in an adjacent folder to the database.
+# You may change the backup folder and the quantity, Uncomment the option and specify it.
+plex_home_dir = /var/lib/plexmediaserver/Library/Application Support/Plex Media Server/
+#database_backup_dir = /some/dir/Database-Backup
+#backups_to_keep = 5
+
+# With this enabled the script will ask for permission before writing to the database.
+prompt_before_committing = true
+
+# What library to edit. Currently only movie libraries are supported.
+# You can limit how manny movies are edited. (-1) for no limit, 'ctrl-C' to break the loop early and save.
+# The library will be edited in order from the most recently created movie.
+library_to_modify = Movies
+modify_limit = -1
+
+# Specific settings for each field that is being edited, here is some general options:
+# The first option is if you wish to enable the category.                                         (Default: false)
+# If "force" is true it will force update the category. As long as it is enabled.                 (Default: false)
+# If "respect_lock" is true it will not update the category if the field is locked (user edited). (Default: true)
+# If "lock_after_completion" is true it will lock the field after finishing editing the category. (Default: true)
+
+#-----------------------------------------------------------------------------------------------------------------------
+[ORIGINAL_TITLE_SETTINGS]
+# This category will edit the "Original Title" field in movies, the result will be:
+# <original title> :: <title in primary language>
+# Only <original title> will be used if the two are similar
+enable_category = false
+
+force = false
+respect_lock = true
+lock_after_completion = true
+
+# Change what's between the titles
+title_delimiter = ::
+
+# Use the secondary language instead of the primary one.
+prefer_secondary_language = false
+
+#-----------------------------------------------------------------------------------------------------------------------
+[CONTENT_RATING_SETTINGS]
+# This category will edit the "content rating" field in movies.
+# It will look up the movie on imdb and use the imdb content rating
+enable_category = false
+
+force = false
+respect_lock = true
+lock_after_completion = true
+
+# Country code of the rating system you wish to use.
+content_rating_country_code = SE
+
+# If a content rating is not found this will be used in stead as the content rating.
+unknown_content_rating = ???
+
+[RATINGS]
+# You'll need to list the available ratings. It's case insensitive so don't worry.
+# You can rename different ratings to the same if you wish. And you may add or remove from the list
+# List them in order for better collection integration (youngest to oldest). Here is how to use it:
+# <the name you wish to use> = <the real rating>
+se/Btl = Btl
+se/7+ = 7
+se/7+ = 8
+se/11+ = 11
+se/15+ = 15
+
+#-----------------------------------------------------------------------------------------------------------------------
+[TAGLINE_SETTINGS]
+# This category will add a tagline to the movie if it's missing one.
+# If it can't find a tagline in the main language it'll look up if the secondary language have one and use that.
+enable_category = false
+
+force = false
+respect_lock = true
+lock_after_completion = true
+
+# Reverse the language priority order.
+prefer_secondary_language = false
+
+#-----------------------------------------------------------------------------------------------------------------------
+[GENRES_SETTINGS]
+# This category will rename and/or merge your genres.
+enable_category = false
+
+force = false
+respect_lock = true
+lock_after_completion = true
+
+
+# List what genres you wish to rename here, it's all case insensitive.
+# You may rename multiple genres into one. And you may add or remove from the list
+# the delimiter is "," and any spaces in conjunction with the delimiter will be ignored
+# <rename_to> = <rename_from> , <rename_also_from> , ...
+
+[GENRES]
+action = action  ,   action-movie, act
+Komedi = comedy
+Äventyr = adventure,   adventuras
+Animerat = animation
+Biografi = Biography
+Dokumentär = documentary
+Drama = drama
+Familj = family
+Fantasy = fantasy
+Historisk = history
+Skräck = horror
+Crime = kriminal
+Mystik = mystery
+Romantik = romance
+Sci-fi = Science Fiction,sci fi
+Sport = sport
+Standup-komedi = Standup-komedi
+Krig = War
+western = Western
+
+#-----------------------------------------------------------------------------------------------------------------------
+[COLLECTIONS_SETTINGS]
+# This section will edit the "collection" section. it will add the movie to a collection that it's a member of on tmdb.
+# It can create new collections if you allow it.
+# primarily it will edit collections
+enable_category = false
+
+force = false
+respect_lock = true
+lock_after_completion = true
+
+prefer_secondary_language = false
+add_new_collections = true
+collection_suffixes_to_remove = samlingen, samling, collection, collections
+
+-----------------------------------------------------------------------------------------------------------------------
+# This section contains rules regarding collection creation and editing. Each setting will be explained.
+# I find the default to be pretty good. Everything is based on data from TMDB.
+
+# A collection must have this manny movies to be created.
+minimum_movie_count = 2
+
+# A movie is only counted towards the "minimum_movie_count" if it has at least this manny votes.
+minimum_movie_vote_count = 400
+
+# A movie is only counted towards the "minimum_movie_count" if it has a better average score than this.
+minimum_movie_score = 5.3
+
+# This will count the sum of all movie scores in the collection. if it falls below that score it's not created.
+minimum_total_score = 14
+
+# This will retroactively delete any collection it finds that would have failed the previous checklist.
+enable_automatic_deletion = false
+
+# A collection will never be deleted automatically if it has at least this manny fields locked.
+delete_locked_less_than = 2
+
+# Each field in the collection have it's own section as well.
+# They'll have the same default settings as the other categories with the same defaults.
+#-----------------------------------------------------------------------------------------------------------------------
+[COLLECTIONS_SUMMARY_SETTINGS]
+# This category will add a summary to the "summary" field in collections. if it is missing one.
+# It will try find it in the primary language and then in the secondary language.
+enable_category = false
+
+force = false
+respect_lock = true
+lock_after_completion = true
+
+# Reverse the language priority order.
+prefer_secondary_language = false
+
+#-----------------------------------------------------------------------------------------------------------------------
+[COLLECTION_CONTENT_RATING_SETTINGS]
+# This category will set the content rating of the collection as the first content rating found
+# in the [RATINGS] table among the collections movies.
+enable_category = false
+
+force = false
+respect_lock = true
+lock_after_completion = true
+
+#-----------------------------------------------------------------------------------------------------------------------
+[COLLECTIONS_POSTER_SETTINGS]
+# This category will download the collection poster from tmdb and set it as the selected poster.
+enable_category = false
+
+force = false
+respect_lock = true
+lock_after_completion = true
+
+# this setting will download each of the members poster as well.
+add_movies_posters = true
+
+# this setting will symlink all posters available to the movies in the collection.
+symlink_movie_posters
+
+#-----------------------------------------------------------------------------------------------------------------------
+[COLLECTION_ARTWORK_SETTINGS]
+enable_category = false
+
+force = false
+respect_lock = true
+lock_after_completion = true
+
+# this setting will download each of the members artwork as well.
+add_movies_art = true
+
+# this setting will symlink all art available to the movies in the collection.
+symlink_movie_art
+#-----------------------------------------------------------------------------------------------------------------------
