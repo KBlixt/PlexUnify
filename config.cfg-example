@@ -1,7 +1,7 @@
 [GLOBAL_SETTINGS]
 
 # This must be false, otherwise nothing will run.
-safety_lock = false
+safety_lock = true
 
 # IP to plex server and an plex auth token is required to make collection creating available.
 # You can skip this if you don't need to create new collections.
@@ -29,7 +29,7 @@ prompt_before_committing = true
 # You can limit how manny movies are edited. (-1) for no limit, 'ctrl-C' to break the loop early and save.
 # The library will be edited in order from the most recently created movie.
 library_to_modify = Movies
-modify_limit = -1
+modify_limit = 50
 
 # Specific settings for each field that is being edited, here is some general options:
 # The first option is if you wish to enable the category.                                         (Default: false)

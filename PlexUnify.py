@@ -373,7 +373,7 @@ def main():
                    'FROM metadata_items '
                    'WHERE library_section_id = ? '
                    'AND metadata_type = 1 '
-                   'ORDER BY title ASC ' 
+                   'ORDER BY created_at DESC ' 
                    'LIMIT ?', (library_key, str(global_settings.getint('modify_limit', 30)),))
 
     for current_movie_id in cursor.fetchall():
