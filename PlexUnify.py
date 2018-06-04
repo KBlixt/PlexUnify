@@ -42,7 +42,7 @@ if global_settings.getboolean('safety_lock', True):
 # tmdb stuff
 tmdb_api_key = global_settings['tmdb_api_key']
 main_language = global_settings['main_tmdb_language']
-secondary_language = global_settings['secondary_tmdb_language']
+secondary_language = global_settings.get('secondary_tmdb_language')
 
 # database stuff
 plex_home_dir = global_settings.get('plex_home_directory')
@@ -1017,6 +1017,9 @@ def get_tmdb_movie_metadata(movie):
 
 def get_secondary_tmdb_movie_metadata(movie):
     global secondary_tmdb_movie_metadata
+
+    if movie['tmdb_id'] is None:
+        get_tmdb_movie_id(movie)
 
     response = retrieve_web_page('https://api.themoviedb.org/3/movie/'
                                  + movie['tmdb_id'] +
