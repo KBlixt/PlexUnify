@@ -1027,7 +1027,7 @@ def get_secondary_tmdb_movie_metadata(movie):
                                  '&language=' + secondary_language, 'Secondary language movie metadata from tmdb')
     secondary_tmdb_movie_metadata = json.loads(response.read().decode('utf-8'))
     if movie['imdb_id'] is None:
-        movie['imdb_id'] = tmdb_movie_metadata['imdb_id']
+        movie['imdb_id'] = secondary_tmdb_movie_metadata['imdb_id']
     response.close()
 
 
