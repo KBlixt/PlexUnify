@@ -415,9 +415,11 @@ def backup_database(source_dir, target_dir):
         os.makedirs(os.path.split(target_dir)[0], mode=0o777, exist_ok=True)
 
     if os.path.isfile(target_dir):
-        for i in range(global_settings.getint('backups_to_keep', 5) - 1):
-            if os.path.isfile(target_dir + str(-i)):
-                copyfile(source_dir, target_dir + str(-(i + 1)))
+
+        for i in reversed(range(global_settings.getint('backups_to_keep', 5) - 1)):
+            if os.path.isfile(target_dir + '-' + str(i)):
+                copyfile(target_dir + '-' + str(i), target_dir + '-' + str(i + 1))
+        copyfile(target_dir, target_dir + '-0')
     copyfile(source_dir, target_dir)
 
 
