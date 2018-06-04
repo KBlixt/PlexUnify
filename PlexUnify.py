@@ -1100,7 +1100,7 @@ def delete_collection(collection, locks_limit=0):
                        'AND library_section_id = ? '
                        'AND title = ?', (library_key, collection['title'],))
     for item in cursor.fetchall():
-        if not len(item[2].split('|')) > locks_limit:
+        if not len(item[2].split('|')) > int(locks_limit):
             continue
         delete_commits.append([item[0], item[1]])
 
