@@ -1135,17 +1135,17 @@ if config['TOOLS'].getboolean('delete_collections_no_locks'):
     tool_remove_unlocked_collections()
 if not (config['TOOLS'].getboolean('delete_collections_no_locks')
         or config['TOOLS'].getboolean('delete_collections_no_movies')):
-    try:
-        main()
-    except Exception as super_error:
-        print('----------------------------------------------------------------------------------------')
-        print(super_error)
-        print('----------------------------------------------------------------------------------------')
-        print('The script encountered an unexpected error, please report it :).')
-        print('The quick fix should be to lock all the fields in the last processed item.')
-        print("It's still safe to save what have already been worked out.")
-        print('----------------------------------------------------------------------------------------')
-        commit_to_database()
+    # try:
+    main()
+    # except Exception as super_error:
+    #     print('----------------------------------------------------------------------------------------')
+    #     print(super_error)
+    #     print('----------------------------------------------------------------------------------------')
+    #     print('The script encountered an unexpected error, please report it :).')
+    #     print('The quick fix should be to lock all the fields in the last processed item.')
+    #     print("It's still safe to save what have already been worked out.")
+    #     print('----------------------------------------------------------------------------------------')
+    #     commit_to_database()
 else:
     commit_to_database()
 
