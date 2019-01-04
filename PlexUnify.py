@@ -342,7 +342,6 @@ def main():
                                   '[index]',
                                   '10')
 
-
         return collection_ret
 
     def report_collection_to_commit():
@@ -1060,7 +1059,7 @@ def get_imdb_content_rating(movie, country):
                                  "/parentalguide?ref_=tt_ql_stry_5", 'certification page on imdb')
     data = response.read()
     response.close()
-    soup = BeautifulSoup(data)
+    soup = BeautifulSoup(data, features="html.parser")
     cert = str(soup.findAll("a", {"href": lambda l: l and l.startswith('/search/title?certificates=' + country + ':')}))
     try:
         cert = cert.split(':')[1].split('"')[0]
