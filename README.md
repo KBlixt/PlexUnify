@@ -33,7 +33,7 @@ download the PlexUnify.py file and put it somewhere. for example:
 cd /opt && git clone https://github.com/KBlixt/PlexUnify.git && cd PlexUnify
 ```
 
-you'll also need two python3 packages:
+you'll also need a python3 package:
 ```sh
 python3 pip -m install plexapi
 ```
