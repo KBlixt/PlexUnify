@@ -192,7 +192,10 @@ prefer_secondary_language = false
 #-----------------------------------------------------------------------------------------------------------------------
 [COLLECTION_CONTENT_RATING_SETTINGS]
 # This category will set the content rating of the collection as the first content rating found
-# in the [RATINGS] table among the collections movies.
+# in the [RATINGS] table among the collections movies. 
+# The [RATINGS] table can be found on line 75 in this config file, make sure the listed ratings 
+# there is listed according to your movies content ratings 
+
 
 enable_category = false
 
