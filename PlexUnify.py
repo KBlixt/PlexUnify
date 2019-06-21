@@ -86,8 +86,8 @@ if library_key is None:
         library_key = fetch[0]
     else:
         print('No library on Plex called "' + global_settings['library_to_modify'] + '"')
-        database.close()
-        sys.exit()
+        print('Unable to connect to your Plex server. preceding without it')
+        plex_api_installed = False
 # end of global static variables.
 
 # global variables:
@@ -126,6 +126,8 @@ def main():
         movie_ret['user_fields'] = movie_info[6]
         movie_ret['user_fields_compare'] = movie_info[6]
         movie_ret['hash'] = movie_info[7]
+        movie_ret['no_id'] = False
+        movie_ret['no_tmdb_id'] = False
 
         if movie_ret['user_fields'] != '':
             movie_ret['user_fields'] = movie_info[6].split('=')[1].split('|')
@@ -138,6 +140,12 @@ def main():
         elif ".imdb" in movie_ret['guid']:
             movie_ret['tmdb_id'] = None
             movie_ret['imdb_id'] = movie_ret['guid'].split('//')[1].split('?')[0]
+        else:
+            movie_ret['no_id'] = True
+            movie_ret['no_tmdb_id'] = True
+            movie_ret['imdb_id'] = None
+            movie_ret['tmdb_id'] = None
+            print('no tmdb id or imdb id was found for this movie. skipping.')
 
         movie_ret['metadata_items_jobs'] = dict()
 
@@ -384,7 +392,7 @@ def main():
         process_movie(movie)
 
         settings = config['COLLECTIONS_SETTINGS']
-        if settings.getboolean('enable_category'):
+        if settings.getboolean('enable_category') and not movie['no_id'] and not movie['no_tmdb_id']:
             try:
                 collection = get_collection_data()
             except ValueError as e:
@@ -473,8 +481,8 @@ def process_movie(movie):
         if movie['imdb_id'] is None:
             get_tmdb_movie_metadata(movie)
             if movie['imdb_id'] is None:
-                if settings.getboolean('lock_after_completion') and '8' not in movie['user_fields']:
-                    movie['user_fields'].append('8')
+                return
+            elif len(movie['imdb_id']) != 9:
                 return
 
         content_rating = get_imdb_content_rating(movie, settings['content_rating_country_code'])
@@ -598,7 +606,7 @@ def process_movie(movie):
     # change genres.
     try:
         settings = config['ORIGINAL_TITLE_SETTINGS']
-        if settings.getboolean('enable_category', False):
+        if settings.getboolean('enable_category', False) and not movie['no_id'] and not movie['no_tmdb_id']:
             change_original_titles()
     except ValueError as e:
         print(e)
@@ -606,7 +614,7 @@ def process_movie(movie):
     # change movie content rating.
     try:
         settings = config['CONTENT_RATING_SETTINGS']
-        if settings.getboolean('enable_category', False):
+        if settings.getboolean('enable_category', False) and not movie['no_id']:
             change_content_ratings()
     except ValueError as e:
         print(e)
@@ -614,7 +622,7 @@ def process_movie(movie):
     # add missing tagline.
     try:
         settings = config['TAGLINE_SETTINGS']
-        if settings.getboolean('enable_category', False):
+        if settings.getboolean('enable_category', False) and not movie['no_id'] and not movie['no_tmdb_id']:
             add_missing_tagline()
     except ValueError as e:
         print(e)
@@ -980,7 +988,8 @@ def retrieve_web_page(url, page_name='page'):
 
 def get_tmdb_movie_id(movie):
     if len(movie['imdb_id']) != 9:
-        raise ValueError("Movie have no IMDB ID. Skipping.")
+        movie['no_id'] = True
+        raise ValueError("Movie have no ID.")
 
     response = retrieve_web_page('https://api.themoviedb.org/3/find/'
                                  + movie['imdb_id'] +
@@ -991,6 +1000,7 @@ def get_tmdb_movie_id(movie):
     data = json.loads(response.read().decode('utf-8'))
 
     if len(data['movie_results']) == 0:
+        movie['no_tmdb_id'] = True
         raise ValueError('Unable to find TMDB ID. Skipping.')
 
     movie['tmdb_id'] = str(data['movie_results'][0]['id'])
