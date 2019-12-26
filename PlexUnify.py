@@ -982,9 +982,17 @@ def retrieve_web_page(url, page_name='page'):
                 print('Breaking out of loop and committing')
                 commit_to_database()
                 sys.exit()
-
+    rate_limit_check(response.headers)
     return response
 
+def rate_limit_check(header):
+    try:
+        limit = int(header['x-ratelimit-remaining'])
+    except:
+        limit = 40
+    if limit < 1:
+        print(Rate limit with TMDB API hit. Will pause for 10 seconds')
+        time.sleep(10)
 
 def get_tmdb_movie_id(movie):
     if len(movie['imdb_id']) != 9:
