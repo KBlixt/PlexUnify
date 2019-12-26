@@ -6,12 +6,12 @@ The script can do quite a few things, here is a list of the stuff it can do with
 - Add imdb content ratings and rename them.
 - Rename and merge genres.
 - Edit the original title to include the title of your language.
-- Add movies to collections.
-- Add collection posters and art based on the poster and art the collection have on tmdb.
-- Add collection posters and art based on the poster and art of the movies in the collection.
-- Add content rating to collections.
-- Add summaries to collections.
-- Create new collections based on a filter (filtering based on the quantity and quality of movies in a collection)
+- Add movies to collections. **(Beta)**
+- Add collection posters and art based on the poster and art the collection have on tmdb. **(Beta)**
+- Add collection posters and art based on the poster and art of the movies in the collection. **(Beta)**
+- Add content rating to collections. **(Beta)**
+- Add summaries to collections. **(Beta)**
+- Create new collections based on a filter (filtering based on the quantity and quality of movies in a collection) **(Beta)**
 
 
 It also includes a few tools that are completely separate which if enabled will not run the other parts of the script.
