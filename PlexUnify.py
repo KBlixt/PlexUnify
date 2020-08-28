@@ -991,7 +991,7 @@ def rate_limit_check(header):
     except:
         limit = 40
     if limit < 1:
-        print(Rate limit with TMDB API hit. Will pause for 10 seconds')
+        print('Rate limit with TMDB API hit. Will pause for 10 seconds')
         time.sleep(10)
 
 def get_tmdb_movie_id(movie):
