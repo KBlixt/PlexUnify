@@ -1,3 +1,5 @@
+# Script is outdated, might rework in the future.
+-----------------
 # PlexUnify
 
 The script can do quite a few things, here is a list of the stuff it can do with a short description.
